@@ -3,13 +3,24 @@
   "name": "ZenId extension",
   "version": "0.1",
 
+  "permissions": [
+    "webNavigation"
+  ],
+
   "content_scripts": [
     {
       "matches": [
       "http://localhost:3000/list"
         // "<all_urls>"
       ],
-      "js": ["content.js"]
+      "js": ["content.js", "meteor-ddp.js", "jquery-2.2.0.js"]
+    },
+
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": ["credentialFill.js"]
     }
   ],
 
