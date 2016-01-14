@@ -9,19 +9,22 @@ function receiveMessage(event) {
   if (event.data[0] !== "goToLink") {
     return;
   }
-  console.log("event.data", event.data);
-  console.log("event.origin", event.origin);
+  //console.log("event.data", event.data);
+  //console.log("event.origin", event.origin);
 
   const userId = event.data[1];
   const appId = event.data[2];
   const loginLink = event.data[3];
   const username = event.data[4];
 
-  var ddp = new MeteorDdp("ws://localhost:3000/websocket");
+  const urlSplit = origin.split("//");
+  //console.log("urlSplit",urlSplit);
+  const DdpUri = "ws://"+urlSplit[1]+"/websocket";
+  //console.log("DdpUri",DdpUri);
+  var ddp = new MeteorDdp(DdpUri);
 
   ddp.connect().then(function () {
-    console.log("ddp.connect successful for", "appId ", appId, " username ", username);
-
+    //console.log("ddp.connect successful for", "appId ", appId, " username ", username);
     ddp.subscribe("appCredential", [userId, appId, username])
       .then(function () {
         //console.log("subscribeCollection successful",ddp.getCollection("userAppCredentials"));
