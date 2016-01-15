@@ -29,6 +29,7 @@ function receiveMessage(event) {
       .then(function () {
         //console.log("subscribeCollection successful",ddp.getCollection("userAppCredentials"));
         var credentialObj = ddp.getCollection("userAppCredentials");
+        //console.log("credentialObj",credentialObj);
         const objKey = Object.keys(credentialObj)[0];
         const password = credentialObj[objKey]["publicApps"][0]["password"];
 

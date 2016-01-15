@@ -16,45 +16,63 @@ chrome.runtime.onMessage.addListener(
     }
     const username = request.username;
     const password = request.password;
+    var filledUsername = false;
+    var filledPassword = false;
+    //console.log("trying to login using username", username, "password", password);
     //const username = "test";
     //const password = "1234567";
-    //alert("start to fill in");
 
     var inputs = document.getElementsByTagName("input");    //look for all inputs
+    //console.log("inputs",inputs);
     var passwordForms = [];
+    var Captcha = null;
 
     for (var i = 0; i < inputs.length; i++) {
-      {    //for each input on document
-        var input = inputs[i];     //look at whatever input
-        if ((input.type == "password" && (input.name.toLowerCase().indexOf("auth") == -1)) ||
-          input.name.toLowerCase() ==
-          "loginform:password") {
-          {
-            input.value = password;
-            //console.log("find one", input);
-            var parentForm = closest(input, "form");
-            console.log(parentForm);
-            if (parentForm) passwordForms.push(parentForm);
-          }
+      //for each input on document
+      var input = inputs[i];     //look at whatever input
+      if (isVisible(input)) {//Make sure the login is visible
+        console.log("input", i, input);
+        if (isCaptcha(input)) {
+          console.log("found captcha");
+          Captcha = input;
         }
-        if (((input.type == "text" || input.type == "email" ) &&
-          (input.name.toLowerCase().indexOf("login") != -1 || input.name.toLowerCase().indexOf("user") != -1 ||
-          input.name == "AgentAccount"))
-          || input.name.toLowerCase() == "loginform:username") {
-          {
-            input.value = username
-          }
+        else if (isUsername(input)) {
+          console.log("found username");
+          input.value = username
+          filledUsername = true;
         }
+        else if (isPassword(input)) {
+          console.log("found password");
+          input.value = password;
+          filledPassword = true;
+          var parentForm = closest(input, "form");
+          console.log(parentForm);
+          if (parentForm) passwordForms.push(parentForm);
+        }
+        else console.log("input doesn't belong to anything:", input);
       }
     }
+
     //alert("passwordForms length is "+passwordForms.length);
-    if (passwordForms.length==1){//如果只找到一个合适的form
-      passwordForms[0].submit();
-    }
+    if (!Captcha) {//如果没有验证码 -> 登录
+      console.log("doesn't have Captcha");
+      console.log("passwordForms", passwordForms);
 
-    else {//多个form的情况:分辨那个是真的
-      // 处理0个form的情况:找登录button
+      var loginButtons = getLoginButtons(passwordForms);
+      //console.log("loginAnchors",loginAnchors);
+      if (loginButtons.length == 1) {
+        console.log("find 1 login anchor, click",loginButtons[0]);
+        if (filledUsername && filledPassword){
+          loginButtons[0].click();
+        } else {
+          console.log("filledUsername", filledUsername, "filledPassword", filledPassword);
+        }
+      } else {
+        console.log("there are", loginButtons.length, "login anchor+button",loginButtons)
+      }
 
+    } else {//如果有验证码,focus在验证码上
+      console.log("有验证码,暂停登录");
     }
 
 
@@ -68,6 +86,98 @@ chrome.runtime.onMessage.addListener(
         el = el.parentElement;
       }
       return el;
+    }
+
+    function isVisible(el) {//Check if the element is visible
+      return (el.offsetParent !== null)
+    }
+
+    function isPassword(input) {
+      //if ((input.type == "password" && (input.name.toLowerCase().indexOf("auth") == -1)) ||
+      //  input.name.toLowerCase() =="loginform:password")
+      //console.log("check for password");
+      return (input.type == "password" && (input.name.toLowerCase().indexOf("auth") == -1));
+    }
+
+    function isUsername(input) {
+      console.log(input['action-data']);
+      return ((input.type == "text" || input.type == "email" ) &&
+        (input.name.toLowerCase().indexOf("login") != -1 || input.name.toLowerCase().indexOf("user") != -1 ||
+          (input.placeholder && input.placeholder.indexOf("邮箱") != -1) ||
+          (input.placeholder && input.placeholder.indexOf("帐号") != -1) ||
+          (input.placeholder && input.placeholder.indexOf("用户名") != -1) ||
+          (input.innerHTML.indexOf("邮箱") != -1 || input.innerHTML.indexOf("帐号") != -1 ||
+          input.innerHTML.indexOf("用户名") != -1)
+        )
+      )
+    }
+
+    function isLoginElement(element) {
+      return element.innerHTML.indexOf("登录") != -1 ||
+        element.innerHTML.indexOf("登 录") != -1 ||
+        element.innerHTML.indexOf("登&nbsp;录") != -1 ||
+        element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
+        element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
+        (element.value && element.value.toLowerCase().indexOf("sign in") != -1)||
+        (element.value && element.value.toLowerCase().indexOf("log in") != -1)||
+        (element.value && element.value.toLowerCase().indexOf("登录") != -1)||
+        (element.value && element.value.toLowerCase().indexOf("登&nbsp;录") != -1)||
+        (element.value && element.value.toLowerCase().indexOf("登 录") != -1)||
+        (element.placeholder && element.placeholder.indexOf("登录") != -1)||
+        (element.placeholder && element.placeholder.indexOf("登&nbsp;录") != -1)||
+        (element.placeholder && element.placeholder.indexOf("登 录") != -1)
+    }
+
+    function isCaptcha(input) {
+      return (input.type == "text" && input.placeholder.indexOf("验证码") != -1);
+    }
+
+    function getLoginButtons(passwordForms) {
+      var buttons = [];
+      var anchors = [];
+      var inputs = [];
+      if (passwordForms.length > 0) {//有form的情况:只在forms里找anchor
+        console.log("password form number: ", passwordForms.length);
+        for (i = 0; i < passwordForms.length; i++) {
+          var form = passwordForms[i];
+          anchors = anchors.concat(Array.prototype.slice.call(form.getElementsByTagName("a")));
+          buttons = buttons.concat(Array.prototype.slice.call(form.getElementsByTagName("button")));
+          inputs = inputs.concat(Array.prototype.slice.call(form.getElementsByTagName("input")));
+        }
+      }
+      else {// 处理0个form的情况:找登录anchor
+        console.log("0 password form");
+        console.log("searching for anchors and buttons from the entire page");
+        anchors = document.getElementsByTagName("a");
+        buttons = document.getElementsByTagName("button");
+        inputs = document.getElementsByTagName("input");
+      }
+
+      console.log("anchors", anchors);
+      console.log("buttons", buttons);
+      console.log("inputs", inputs);
+      var elements = Array.prototype.slice.call(inputs);
+      if (buttons.length>0) {
+        console.log("elements.concat buttons");
+        elements = elements.concat(Array.prototype.slice.call(buttons));
+      }
+      if (anchors.length>0) {
+        console.log("elements.concat anchors");
+        elements = elements.concat(Array.prototype.slice.call(anchors));
+      }
+
+      console.log("elements", elements);
+
+      var loginElements = [];
+      for (i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        if (isVisible(element)) {
+          if (isLoginElement(element)) {
+            loginElements.push(element);
+          }
+        }
+      }
+      return loginElements;
     }
   });
 
