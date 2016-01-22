@@ -16,15 +16,18 @@
         "content.js",
         "meteor-ddp.js",
         "jquery-2.2.0.js"
-      ]
+      ],
+      "run_at": "document_start"
     },
     {
       "matches": [
         "<all_urls>"
       ],
       "js": [
-        "credentialFill.js"
-      ]
+        "credentialFill.js",
+        "jquery-2.2.0.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "background": {
