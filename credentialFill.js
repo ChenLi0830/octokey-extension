@@ -13,6 +13,7 @@ chrome.runtime.onMessage.addListener(
             console.log("not new_login_opened event");
             return;
         }
+        //alert("login start");
         const username = request.username;
         const password = request.password;
         var filledUsername = false;
@@ -63,28 +64,19 @@ chrome.runtime.onMessage.addListener(
             console.log("passwordForms", passwordForms);
             console.log("passwordInputs.length", passwordInputs.length);
 
-            //if (passwordForms.length===1 && passwordInputs.length===1){//如果只有一个密码field,focus, 提交form
-            //    console.log("only one form, submit");
-            //passwordInputs[0].focus();
-            //passwordForms[0].submit();
+            if (!filledUsername){//精确查找找不到username,就用brute force
+                bruteForceFillUsername();
+            }
 
-            //var e = $.Event("keypress");
-            //e.which = 13; // # Some key code value
-            //e.keyCode = 13;
-            ////$("input").trigger(e);
-            //console.log("triggering keydown: ", e.which);
-            //console.log("passwordInputs[0]",passwordInputs[0]);
-            //var passwordField = $(passwordInputs[0]);
-            //passwordField.focus();
-            //passwordField.trigger(e);
-
-            //} else {//多个密码field,点登录button
             var loginButtons = getLoginButtons(passwordForms);
             //console.log("loginAnchors",loginAnchors);
-            if (loginButtons.length == 1) {
+            if (loginButtons.length === 1) {
                 console.log("find 1 login anchor, click", loginButtons[0]);
                 if (filledUsername && filledPassword) {
-                    loginButtons[0].click();
+                    setTimeout(function () {
+                        loginButtons[0].click()
+                    }, 300);
+                    //填好后等0.3秒再点,这个会解决部分网页的no response
                 } else {
                     console.log("filledUsername", filledUsername, "filledPassword", filledPassword);
                 }
@@ -95,6 +87,7 @@ chrome.runtime.onMessage.addListener(
 
 
         } else {//如果有验证码,focus在验证码上
+            Captcha.focus();
             console.log("有验证码,暂停登录");
         }
 
@@ -124,14 +117,17 @@ chrome.runtime.onMessage.addListener(
         }
 
         function isUsername(input) {
-            console.log(input['action-data']);
             return ((input.type == "text" || input.type == "email" ) &&
                 (input.name.toLowerCase().indexOf("login") != -1 ||
                     input.name.toLowerCase().indexOf("user") != -1 ||
                     input.name.toLowerCase().indexOf("username") != -1 ||
+                    input.name.toLowerCase().indexOf("email") != -1 ||
+                    input.name.toLowerCase().indexOf("passport") != -1 ||
                     input.id.toLowerCase().indexOf("login") != -1 ||
                     input.id.toLowerCase().indexOf("user") != -1 ||
                     input.id.toLowerCase().indexOf("username") != -1 ||
+                    input.id.toLowerCase().indexOf("email") != -1 ||
+                    input.id.toLowerCase().indexOf("passport") != -1 ||
                     (input.placeholder && input.placeholder.indexOf("邮箱") != -1) ||
                     (input.placeholder && input.placeholder.indexOf("帐号") != -1) ||
                     (input.placeholder && input.placeholder.indexOf("用户名") != -1) ||
@@ -142,24 +138,17 @@ chrome.runtime.onMessage.addListener(
         }
 
         function isLoginElement(element) {
-            console.log($(element).html());
-            return element.innerHTML.replace(/\s/g, "") === "登录" ||
-                    //element.innerHTML === "登录" ||
-                    //element.innerHTML === "登 录" ||
-                    //element.innerHTML === "登&nbsp;录" ||
-                element.innerHTML.replace(/\s/g, "").indexOf(">登录<") != -1 ||
-                    //element.innerHTML.indexOf(">登 录<") != -1 ||
-                    //element.innerHTML.indexOf(">登&nbsp;录<") != -1 ||
+            if (element.type && element.type === "submit")
+                return true;
+            return element.innerHTML.replace(/\s|&nbsp;/g, "") === "登录" ||
+                element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">登录<") != -1 ||
                 element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
                 element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
                 (element.value && element.value.toLowerCase().indexOf("sign in") != -1) ||
                 (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
-                (element.value && element.value.toLowerCase().indexOf("登录") != -1) ||
-                (element.value && element.value.toLowerCase().indexOf("登&nbsp;录") != -1) ||
-                (element.value && element.value.toLowerCase().indexOf("登 录") != -1) ||
-                (element.placeholder && element.placeholder.indexOf("登录") != -1) ||
-                (element.placeholder && element.placeholder.indexOf("登&nbsp;录") != -1) ||
-                (element.placeholder && element.placeholder.indexOf("登 录") != -1)
+                (element.value && element.value.toLowerCase().replace(/\s/g, "").indexOf("登录") != -1) ||
+                (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "").indexOf("登录") != -1)
+
         }
 
         function isCaptcha(input) {
@@ -174,17 +163,18 @@ chrome.runtime.onMessage.addListener(
                 console.log("password form number: ", passwordForms.length);
                 for (i = 0; i < passwordForms.length; i++) {
                     var form = passwordForms[i];
-                    anchors = anchors.concat(Array.prototype.slice.call(form.getElementsByTagName("a")));
-                    buttons = buttons.concat(Array.prototype.slice.call(form.getElementsByTagName("button")));
-                    inputs = inputs.concat(Array.prototype.slice.call(form.getElementsByTagName("input")));
+                    anchors = anchors.concat(
+                        Array.prototype.slice.call(form.querySelectorAll("a[href^='javascript'], a[href^='#']")));
+                    buttons = buttons.concat(Array.prototype.slice.call(form.querySelectorAll("button")));
+                    inputs = inputs.concat(Array.prototype.slice.call(form.querySelectorAll("input")));
                 }
             }
             else {// 处理0个form的情况:找登录anchor
                 console.log("0 password form");
                 console.log("searching for anchors and buttons from the entire page");
-                anchors = document.getElementsByTagName("a");
-                buttons = document.getElementsByTagName("button");
-                inputs = document.getElementsByTagName("input");
+                anchors = document.querySelectorAll("a[href^='javascript'], a[href^='#']");
+                buttons = document.querySelectorAll("button");
+                inputs = document.querySelectorAll("input");
             }
 
             console.log("anchors", anchors);
@@ -192,15 +182,15 @@ chrome.runtime.onMessage.addListener(
             console.log("inputs", inputs);
             var elements = Array.prototype.slice.call(inputs);
             if (buttons.length > 0) {
-                console.log("elements.concat buttons");
+                //console.log("elements.concat buttons");
                 elements = elements.concat(Array.prototype.slice.call(buttons));
             }
             if (anchors.length > 0) {
-                console.log("elements.concat anchors");
+                //console.log("elements.concat anchors");
                 elements = elements.concat(Array.prototype.slice.call(anchors));
             }
 
-            console.log("elements", elements);
+            console.log("all candidate elements", elements);
 
             var loginElements = [];
             for (i = 0; i < elements.length; i++) {
@@ -212,6 +202,19 @@ chrome.runtime.onMessage.addListener(
                 }
             }
             return loginElements;
+        }
+
+        function bruteForceFillUsername(){
+            inputs = document.querySelectorAll("input[type='text'], input[type='email']");
+            for (i=0; i<inputs.length;i++){
+                var input = inputs[i];
+                if (isVisible(input)){
+                    input.focus();
+                    input.value = username;
+                    input.blur();
+                    filledUsername = true;
+                }
+            }
         }
     });
 
