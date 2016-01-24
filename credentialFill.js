@@ -138,8 +138,8 @@ chrome.runtime.onMessage.addListener(
         }
 
         function isLoginElement(element) {
-            if (element.type && element.type === "submit")
-                return true;
+            //if (element.type && element.type === "submit")
+            //    return true;
             return element.innerHTML.replace(/\s|&nbsp;/g, "") === "登录" ||
                 element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">登录<") != -1 ||
                 element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
@@ -148,7 +148,6 @@ chrome.runtime.onMessage.addListener(
                 (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
                 (element.value && element.value.toLowerCase().replace(/\s/g, "").indexOf("登录") != -1) ||
                 (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "").indexOf("登录") != -1)
-
         }
 
         function isCaptcha(input) {
@@ -172,7 +171,7 @@ chrome.runtime.onMessage.addListener(
             else {// 处理0个form的情况:找登录anchor
                 console.log("0 password form");
                 console.log("searching for anchors and buttons from the entire page");
-                anchors = document.querySelectorAll("a[href^='javascript'], a[href^='#']");
+                anchors = document.querySelectorAll("a[href^='javascript'], a[href^='#'], a:not([href])");
                 buttons = document.querySelectorAll("button");
                 inputs = document.querySelectorAll("input");
             }

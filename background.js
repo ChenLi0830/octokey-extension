@@ -10,7 +10,11 @@ var tabsToSend = {};
 var iframeSiteList = [
     "https://login.tmall.com/",
     "http://i.xunlei.com/login.html",
-    "https://pan.baidu.com/"
+    "https://pan.baidu.com/",
+    "https://passport.baidu.com/v2/?login",
+    "http://www.nuomi.com/pclogin/main/loginpage",
+    "http://passport.acfun.tv/login/",
+    "https://login.taobao.com/"
 ];
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -49,6 +53,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 });
 
 chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
+//chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
     const tabId = details.tabId;
     if (tabsToSend[tabId]) {
         if ($.inArray(tabsToSend[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里

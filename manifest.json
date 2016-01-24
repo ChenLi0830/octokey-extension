@@ -8,8 +8,8 @@
   ],
   "background": {
     "scripts": [
-      "jquery-2.2.0.js",
-      "background.js"
+      "background.js",
+      "jquery-2.2.0.js"
     ]
   },
   "content_scripts": [
