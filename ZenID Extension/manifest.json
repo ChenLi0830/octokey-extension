@@ -1,14 +1,18 @@
 {
   "manifest_version": 2,
   "name": "ZenId extension",
-  "version": "0.1",
+  "version": "0.1.1",
   "permissions": [
     "webNavigation",
     "tabs"
   ],
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
   "background": {
     "scripts": [
       "background.js",
+      "meteor-ddp.js",
       "jquery-2.2.0.js"
     ]
   },
@@ -16,13 +20,12 @@
     {
       "matches": [
         "http://localhost:3000/*",
-        "http://zenid.meteor.com/*"
-        // "<all_urls>"
+        "http://114.215.98.118/*",
+        "http://zenid.meteor.com/*",
+        "http://zenid.nocland.com/*"
       ],
       "js": [
-        "content.js",
-        "meteor-ddp.js",
-        "jquery-2.2.0.js"
+        "content.js"
       ],
       "run_at": "document_start"
     },
@@ -36,8 +39,5 @@
       "run_at": "document_start",
       "all_frames": true
     }
-  ],
-  "browser_action": {
-    "default_icon": "icon.png"
-  }
+  ]
 }
