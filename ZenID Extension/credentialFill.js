@@ -146,8 +146,8 @@ chrome.runtime.onMessage.addListener(
                 element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
                 (element.value && element.value.toLowerCase().indexOf("sign in") != -1) ||
                 (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
-                (element.value && element.value.toLowerCase().replace(/\s/g, "").indexOf("登录") != -1) ||
-                (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "").indexOf("登录") != -1)
+                (element.value && element.value.toLowerCase().replace(/\s/g, "")===("登录")) ||
+                (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "")===("登录"))
         }
 
         function isCaptcha(input) {
