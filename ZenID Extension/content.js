@@ -16,6 +16,7 @@ function receiveMessage(event) {
     const appId = event.data[2];
     const loginLink = event.data[3];
     const username = event.data[4];
+    const password = event.data[5];
 
     //Todo 加入extensionId
     chrome.runtime.sendMessage(/*extensionId,*/
@@ -25,7 +26,8 @@ function receiveMessage(event) {
             "appId": appId,
             "loginLink": loginLink,
             "username": username,
-            "origin": origin
+            "password":password,
+            "origin": origin,
         }
     );
 }

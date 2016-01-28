@@ -23,12 +23,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         const username = request.username;
         const userId = request.userId;
         const appId = request.appId;
+        const password = request.password;
         const origin = request.origin;
         //const password = request.password;
 
         chrome.tabs.create({"url": loginLink}, function (tab) {
-            tabsToSend[tab.id] = {"username": username, "url": loginLink};
-            getPassword(username, userId, appId, origin, tab.id);
+            if (password.length === 0) {
+                tabsToSend[tab.id] = {"username": username, "url": loginLink};
+                getPassword(username, userId, appId, origin, tab.id);
+            } else {
+                tabsToSend[tab.id] = {"username": username, "password":password, "url": loginLink};
+                tabsToSend[tab.id].doneGettingPwd = true;
+            }
         });
     }
 });
@@ -38,6 +44,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (tabsToSend[tabId]) {//从background js里创建的（收到zenID的request才打开的tab）
         if ($.inArray(tabsToSend[tabId].url, iframeSiteList) > -1) {//在iframeSiteList名单里
             if (changeInfo.status === "complete") {
+                //console.log("chrome.tabs.onUpdated logging in", tabsToSend[tabId].url, tabsToSend[tabId]);
                 tabsToSend[tabId].doneLoadingPage = true;
                 loginIfReady(tabId);
             }
@@ -49,8 +56,8 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
     const tabId = details.tabId;
     if (tabsToSend[tabId]) {
-        console.log("webNavigation.onCompleted.tabsToSend[tabId]",tabsToSend[tabId]);
         if ($.inArray(tabsToSend[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
+            //console.log("webNavigation.onCompleted logging in", tabsToSend[tabId].url, tabsToSend[tabId]);
             tabsToSend[tabId].doneLoadingPage = true;
             loginIfReady(tabId);
         }
@@ -90,7 +97,7 @@ function loginIfReady(tabId) {
     if (tabsToSend[tabId].doneGettingPwd && tabsToSend[tabId].doneLoadingPage) {
         const username = tabsToSend[tabId].username;
         const password = tabsToSend[tabId].password;
-        console.log("login start for ",tabsToSend[tabId].url);
+        console.log("login start for ", tabsToSend[tabId].url);
         delete tabsToSend[tabId];
 
         setTimeout(function () {
