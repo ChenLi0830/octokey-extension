@@ -1,4 +1,10 @@
 //console.log("Hello from content script!");
+var isInstalledNode = document.createElement('div');
+isInstalledNode.id = 'extension-is-installed-nehponjfbiigcobaphdahhhiemfpaeob';
+window.onload = function(){
+    document.body.appendChild(isInstalledNode);
+};
+
 
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
