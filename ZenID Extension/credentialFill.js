@@ -64,12 +64,18 @@ chrome.runtime.onMessage.addListener(
             console.log("passwordForms", passwordForms);
             console.log("passwordInputs.length", passwordInputs.length);
 
-            if (!filledUsername){//精确查找找不到username,就用brute force
+            if (!filledUsername) {//精确查找找不到username,就用brute force
                 bruteForceFillUsername();
             }
 
             var loginButtons = getLoginButtons(passwordForms);
-            //console.log("loginAnchors",loginAnchors);
+
+            //Todo make this a method and make it apply general cases
+            setTimeout(function () {
+                $('#_n1z')
+                    .simulate("drag-n-drop", {dx: 300, interpolation: {stepWidth: 10, stepDelay: 50}});
+            }, 1000);
+
             if (loginButtons.length === 1) {
                 console.log("find 1 login anchor, click", loginButtons[0]);
                 if (filledUsername && filledPassword) {
@@ -83,8 +89,6 @@ chrome.runtime.onMessage.addListener(
             } else {
                 console.log("there are", loginButtons.length, "login anchor+button", loginButtons)
             }
-            //}
-
 
         } else {//如果有验证码,focus在验证码上
             Captcha.focus();
@@ -146,8 +150,8 @@ chrome.runtime.onMessage.addListener(
                 element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
                 (element.value && element.value.toLowerCase().indexOf("sign in") != -1) ||
                 (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
-                (element.value && element.value.toLowerCase().replace(/\s/g, "")===("登录")) ||
-                (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "")===("登录"))
+                (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("登录")) ||
+                (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录"))
         }
 
         function isCaptcha(input) {
@@ -203,11 +207,11 @@ chrome.runtime.onMessage.addListener(
             return loginElements;
         }
 
-        function bruteForceFillUsername(){
+        function bruteForceFillUsername() {
             inputs = document.querySelectorAll("input[type='text'], input[type='email']");
-            for (i=0; i<inputs.length;i++){
+            for (i = 0; i < inputs.length; i++) {
                 var input = inputs[i];
-                if (isVisible(input)){
+                if (isVisible(input)) {
                     input.focus();
                     input.value = username;
                     input.blur();

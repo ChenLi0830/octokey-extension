@@ -1,43 +1,51 @@
 {
-  "manifest_version": 2,
-  "name": "ZenId extension",
-  "version": "0.1.5",
-  "permissions": [
-    "webNavigation",
-    "tabs"
-  ],
-  "browser_action": {
-    "default_icon": "icon.png"
-  },
-  "background": {
-    "scripts": [
-      "background.js",
-      "meteor-ddp.js",
-      "jquery-2.2.0.js"
-    ]
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "http://localhost:3000/*",
-        "http://114.215.98.118/*",
-        "http://zenid.meteor.com/*",
-        "http://zenid.nocland.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "run_at": "document_start"
+    "manifest_version": 2,
+    "name": "ZenId extension",
+    "version": "0.1.5",
+    "permissions": [
+        "webNavigation",
+        "tabs"
+    ],
+    "browser_action": {
+        "default_icon": "icon.png"
     },
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "credentialFill.js"
-      ],
-      "run_at": "document_start",
-      "all_frames": true
-    }
-  ]
+    "background": {
+        "scripts": [
+            "background.js",
+            "meteor-ddp.js",
+            "jquery-2.2.0.js"
+        ]
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://localhost:3000/*",
+                "http://114.215.98.118/*",
+                "http://zenid.meteor.com/*",
+                "http://zenid.nocland.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_start"
+        },
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "credentialFill.js",
+                "register.js",
+                "jquery-1.7.1.min.js",
+                "jquery-ui.css",
+                "jquery.simulate.js",
+                "jquery.simulate.ext.js",
+                "bililiteRange.js",
+                "jquery.simulate.key-sequence.js",
+                "jquery.simulate.drag-n-drop.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": true
+        }
+    ]
 }

@@ -1,12 +1,4 @@
-/*chrome.browserAction.onClicked.addListener(function(tab){
- //send a message to the active tab
- chrome.tabs.query({active:true, currentWindow: true}, function(tabs){
- var activeTab = tabs[0];
- chrome.tabs.sendMessage(activeTab.id, {"message":"clicked_browser_action"});
- });
- });*/
-
-var tabsToSend = {};
+var tabsOpened = {};
 var iframeSiteList = [
     "https://login.tmall.com/",
     "http://i.xunlei.com/login.html",
@@ -18,7 +10,7 @@ var iframeSiteList = [
 ];
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.message === "open_new_login") {
+    if (request.message === "new_tab_login") {
         const loginLink = request.loginLink;
         const username = request.username;
         const userId = request.userId;
@@ -29,11 +21,12 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
         chrome.tabs.create({"url": loginLink}, function (tab) {
             if (password.length === 0) {
-                tabsToSend[tab.id] = {"username": username, "url": loginLink};
+                tabsOpened[tab.id] = {"username": username, "url": loginLink, "task": request.message};
                 getPassword(username, userId, appId, origin, tab.id);
             } else {
-                tabsToSend[tab.id] = {"username": username, "password":password, "url": loginLink};
-                tabsToSend[tab.id].doneGettingPwd = true;
+                tabsOpened[tab.id] =
+                {"username": username, "password": password, "url": loginLink, "task": request.message};
+                tabsOpened[tab.id].doneGettingPwd = true;
             }
         });
     }
@@ -41,11 +34,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     //alert("tab.url:"+ tab.url);
-    if (tabsToSend[tabId]) {//从background js里创建的（收到zenID的request才打开的tab）
-        if ($.inArray(tabsToSend[tabId].url, iframeSiteList) > -1) {//在iframeSiteList名单里
+    if (tabsOpened[tabId]) {//从background js里创建的（收到zenID的request才打开的tab）
+        if (tabsOpened[tabId].task !== "new_tab_login") return;
+
+        if ($.inArray(tabsOpened[tabId].url, iframeSiteList) > -1) {//在iframeSiteList名单里
             if (changeInfo.status === "complete") {
-                //console.log("chrome.tabs.onUpdated logging in", tabsToSend[tabId].url, tabsToSend[tabId]);
-                tabsToSend[tabId].doneLoadingPage = true;
+                //console.log("chrome.tabs.onUpdated logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
+                tabsOpened[tabId].doneLoadingPage = true;
                 loginIfReady(tabId);
             }
         }
@@ -55,10 +50,12 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 //chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
 chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
     const tabId = details.tabId;
-    if (tabsToSend[tabId]) {
-        if ($.inArray(tabsToSend[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
-            //console.log("webNavigation.onCompleted logging in", tabsToSend[tabId].url, tabsToSend[tabId]);
-            tabsToSend[tabId].doneLoadingPage = true;
+    if (tabsOpened[tabId]) {
+        if (tabsOpened[tabId].task !== "new_tab_login") return;
+
+        if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
+            //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
+            tabsOpened[tabId].doneLoadingPage = true;
             loginIfReady(tabId);
         }
     }
@@ -81,9 +78,9 @@ function getPassword(username, userId, appId, origin, tabId) {
                 const objKey = Object.keys(credentialObj)[0];
                 const password = credentialObj[objKey]["publicApps"][0]["password"];
 
-                tabsToSend[tabId].password = password;
-                tabsToSend[tabId].doneGettingPwd = true;
-                //console.log("doneGettingPwd - tabsToSend[tabId]", tabsToSend[tabId]);
+                tabsOpened[tabId].password = password;
+                tabsOpened[tabId].doneGettingPwd = true;
+                //console.log("doneGettingPwd - tabsOpened[tabId]", tabsOpened[tabId]);
                 loginIfReady(tabId);
 
             })
@@ -94,11 +91,11 @@ function getPassword(username, userId, appId, origin, tabId) {
 }
 
 function loginIfReady(tabId) {
-    if (tabsToSend[tabId].doneGettingPwd && tabsToSend[tabId].doneLoadingPage) {
-        const username = tabsToSend[tabId].username;
-        const password = tabsToSend[tabId].password;
-        console.log("login start for ", tabsToSend[tabId].url);
-        delete tabsToSend[tabId];
+    if (tabsOpened[tabId].doneGettingPwd && tabsOpened[tabId].doneLoadingPage) {
+        const username = tabsOpened[tabId].username;
+        const password = tabsOpened[tabId].password;
+        console.log("login start for ", tabsOpened[tabId].url);
+        delete tabsOpened[tabId];
 
         setTimeout(function () {
             chrome.tabs.sendMessage(tabId,
@@ -110,19 +107,69 @@ function loginIfReady(tabId) {
     }
 }
 
-//chrome.tabs.query({active:true,currentWindow:true},function(tabs){
-//  var activeTab = tabs[0];
-//  chrome.tabs.sendMessage(activeTab.id,{"message":"new_login_opened"});
-//  //chrome.tabs.sendMessage(activeTab.id,{"message":"new_login_opened", "username":username, "password":password});
+// Register
+
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.message === "new_tab_register") {
+
+        const registerLink = request.registerLink;
+        const userId = request.userId;
+        const appId = request.appId;
+        const regType = request.regType;
+        const username = request.account;
+        const origin = request.origin;
+
+        //TODO 生成password
+        const password = "Abc123***!";
+
+        chrome.tabs.create({"url": registerLink}, function (tab) {
+            tabsOpened[tab.id] =
+            {"username": username, "password": password, "url": registerLink, "task": request.message};
+        });
+    }
+});
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    if (tabsOpened[tabId]) {
+        const username = tabsOpened[tabId].username;
+        const password = tabsOpened[tabId].password;
+        if (tabsOpened[tabId].task !== "new_tab_register") return;
+
+        if (changeInfo.status === "complete") {
+            console.log("register start for ", tabsOpened[tabId].url);
+            delete tabsOpened[tabId];
+
+
+            setTimeout(function () {
+                chrome.tabs.sendMessage(tabId,
+                    {event: "new_register_opened", username: username, password: password},
+                    function (response) {
+                        console.log(response);
+                    });
+            }, 100);
+        }
+    }
+});
+
+
+//chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
+//    const tabId = details.tabId;
+//    if (tabsOpened[tabId]) {
+//        const username = tabsOpened[tabId].username;
+//        const password = tabsOpened[tabId].password;
+//        if (tabsOpened[tabId].task !== "new_tab_register") return;
 //
-// });
-
-
-/*
- chrome.runtime.onMessage.addListener(
- function(request, sender, sendResponse){
- if (request.message==="open_new_tab"){
- console.log("openNewTab from backend script");
- chrome.tabs.create({"url":request.url});
- }
- });*/
+//        console.log("register start for ", tabsOpened[tabId].url);
+//        delete tabsOpened[tabId];
+//
+//        setTimeout(function () {
+//            chrome.tabs.sendMessage(tabId,
+//                {event: "new_register_opened", username: username, password: password},
+//                function (response) {
+//                    console.log(response);
+//                });
+//        }, 100);
+//    }
+//});
+//
