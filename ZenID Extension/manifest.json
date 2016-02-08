@@ -13,7 +13,10 @@
         "scripts": [
             "background.js",
             "meteor-ddp.js",
-            "jquery-2.2.0.js"
+            "jquery-2.2.0.js",
+            "lib/core-min.js",
+            "lib/cipher-core-min.js",
+            "lib/aes-min.js"
         ]
     },
     "content_scripts": [
@@ -37,7 +40,6 @@
                 "credentialFill.js",
                 "register.js",
                 "jquery-1.7.1.min.js",
-                "jquery-ui.css",
                 "jquery.simulate.js",
                 "jquery.simulate.ext.js",
                 "bililiteRange.js",

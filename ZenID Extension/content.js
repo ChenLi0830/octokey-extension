@@ -15,13 +15,13 @@ function receiveMessage(event) {
     if (event.data[0] === "logIn") {
         this.handleLogin(event, origin);
     }
-    else if (event.data[0] === "register"){
+    else if (event.data[0] === "register") {
         this.handleRegister(event, origin);
     }
 }
 
 
-function handleLogin(event, origin){
+function handleLogin(event, origin) {
     if (event.data[0] == "logIn") {
         //console.log("event.data", event.data);
         //console.log("event.origin", event.origin);
@@ -31,6 +31,8 @@ function handleLogin(event, origin){
         const loginLink = event.data[3];
         const username = event.data[4];
         const password = event.data[5];
+        const hexIv = event.data[6];
+        const hexKey = event.data[7];
 
         //Todo send this only to our extension: extensionId
         chrome.runtime.sendMessage(/*extensionId,*/
@@ -41,6 +43,8 @@ function handleLogin(event, origin){
                 "loginLink": loginLink,
                 "username": username,
                 "password": password,
+                "hexIv": hexIv,
+                "hexKey": hexKey,
                 "origin": origin,
             }
         );
@@ -50,7 +54,7 @@ function handleLogin(event, origin){
 }
 
 
-function handleRegister(event, origin){
+function handleRegister(event, origin) {
     if (event.data[0] == "register") {
         //console.log("event.data", event.data);
         //console.log("event.origin", event.origin);

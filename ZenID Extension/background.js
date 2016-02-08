@@ -16,13 +16,15 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         const userId = request.userId;
         const appId = request.appId;
         const password = request.password;
+        const hexIv = request.hexIv;
+        const hexKey = request.hexKey;
         const origin = request.origin;
         //const password = request.password;
 
         chrome.tabs.create({"url": loginLink}, function (tab) {
             if (password.length === 0) {
                 tabsOpened[tab.id] = {"username": username, "url": loginLink, "task": request.message};
-                getPassword(username, userId, appId, origin, tab.id);
+                getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
             } else {
                 tabsOpened[tab.id] =
                 {"username": username, "password": password, "url": loginLink, "task": request.message};
@@ -61,7 +63,7 @@ chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部�
     }
 });
 
-function getPassword(username, userId, appId, origin, tabId) {
+function getPassword(username, userId, appId, origin, tabId, hexIv, hexKey) {
     const urlSplit = origin.split("//");
     //console.log("urlSplit",urlSplit);
     const DdpUri = "ws://" + urlSplit[1] + "/websocket";
@@ -76,9 +78,9 @@ function getPassword(username, userId, appId, origin, tabId) {
                 var credentialObj = ddp.getCollection("userAppCredentials");
                 //console.log("credentialObj",credentialObj);
                 const objKey = Object.keys(credentialObj)[0];
-                const password = credentialObj[objKey]["publicApps"][0]["password"];
+                const encryptedPwd = credentialObj[objKey]["publicApps"][0]["password"];
 
-                tabsOpened[tabId].password = password;
+                tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
                 tabsOpened[tabId].doneGettingPwd = true;
                 //console.log("doneGettingPwd - tabsOpened[tabId]", tabsOpened[tabId]);
                 loginIfReady(tabId);
@@ -88,6 +90,26 @@ function getPassword(username, userId, appId, origin, tabId) {
                 console.log('there is some error', err);
             });
     });
+}
+
+function decryptAES(encryptedPwd, hexIv, hexKey) {
+    var plaintextArray = CryptoJS.AES.decrypt(
+        {ciphertext: CryptoJS.enc.Hex.parse(encryptedPwd)},
+        CryptoJS.enc.Hex.parse(hexKey),
+        {iv: CryptoJS.enc.Hex.parse(hexIv)}
+    );
+
+    plaintextArray = CryptoJS.enc.Hex.stringify(plaintextArray);
+
+    function hex2a(hex) {
+        var str = '';
+        for (var i = 0; i < hex.length; i += 2)
+            str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        return str;
+    }
+
+    console.log("decrypted text:", plaintextArray.toString());
+    return hex2a(plaintextArray.toString());
 }
 
 function loginIfReady(tabId) {
