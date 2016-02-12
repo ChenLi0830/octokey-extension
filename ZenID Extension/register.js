@@ -1,6 +1,7 @@
-/**
+/*
+/!**
  * Created by Chen on 2016-01-13.
- */
+ *!/
 
     //console.log("hello from credentialFill!");
     //chrome.runtime.sendMessage({"message":"script_loading_complete"});
@@ -27,11 +28,9 @@ chrome.runtime.onMessage.addListener(
 
         setTimeout(function () {
             document.getElementById("J_BtnMobileForm").click();
-        }, 3500);
+        }, 2000);
 
-
-
-        /*const username = request.username;
+        /!*const username = request.username;
         const password = request.password;
         var filledUsername = false;
         var filledPassword = false;
@@ -109,7 +108,8 @@ chrome.runtime.onMessage.addListener(
         } else {//如果有验证码,focus在验证码上
             Captcha.focus();
             console.log("有验证码,暂停登录");
-        }*/
+        }*!/
 
 
     });
+*/

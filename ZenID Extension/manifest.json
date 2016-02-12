@@ -4,20 +4,17 @@
     "version": "0.1.5",
     "permissions": [
         "webNavigation",
-        "tabs"
+        "webRequest",
+        "webRequestBlocking",
+        "tabs",
+        "https://*/",
+        "http://*/"
     ],
     "browser_action": {
         "default_icon": "icon.png"
     },
     "background": {
-        "scripts": [
-            "background.js",
-            "meteor-ddp.js",
-            "jquery-2.2.0.js",
-            "lib/core-min.js",
-            "lib/cipher-core-min.js",
-            "lib/aes-min.js"
-        ]
+        "page": "background.html"
     },
     "content_scripts": [
         {
@@ -30,7 +27,8 @@
             "js": [
                 "content.js"
             ],
-            "run_at": "document_start"
+            "run_at": "document_start",
+            "all_frames": true
         },
         {
             "matches": [

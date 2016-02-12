@@ -1,4 +1,6 @@
 var tabsOpened = {};
+var authTabs = [];
+window.windowIdMaps = [];
 var iframeSiteList = [
     "https://login.tmall.com/",
     "http://i.xunlei.com/login.html",
@@ -53,12 +55,21 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
     const tabId = details.tabId;
     if (tabsOpened[tabId]) {
-        if (tabsOpened[tabId].task !== "new_tab_login") return;
-
-        if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
-            //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
-            tabsOpened[tabId].doneLoadingPage = true;
-            loginIfReady(tabId);
+        switch (tabsOpened[tabId].task) {
+            case "new_tab_login":
+                if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
+                    //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
+                    tabsOpened[tabId].doneLoadingPage = true;
+                    loginIfReady(tabId);
+                }
+                break;
+            case "new_tab_register":
+                chrome.tabs.executeScript(tabId, {
+                        allFrames: true,
+                        file: 'testIframe.js'
+                    });
+                delete tabsOpened[tabId];
+                break;
         }
     }
 });
@@ -108,7 +119,7 @@ function decryptAES(encryptedPwd, hexIv, hexKey) {
         return str;
     }
 
-    console.log("decrypted text:", plaintextArray.toString());
+    //console.log("decrypted text:", hex2a(plaintextArray.toString());
     return hex2a(plaintextArray.toString());
 }
 
@@ -133,8 +144,9 @@ function loginIfReady(tabId) {
 
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.message === "new_tab_register") {
 
+    if (request.message === "new_tab_register") {
+        //alert("new_tab_register");
         const registerLink = request.registerLink;
         const userId = request.userId;
         const appId = request.appId;
@@ -142,16 +154,124 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         const username = request.account;
         const origin = request.origin;
 
-        //TODO 生成password
-        const password = "Abc123***!";
+        chrome.windows.create({
+            url: registerLink,
+            left: 500,
+            top: 500,
+            focused: false,
+            height: 1,
+            width: 1
+        }, function (createdWindow) {
+            //第一件事就是focus回之前的window
+            chrome.windows.update(sender.tab.windowId, {
+                focused: true
+            });
 
-        chrome.tabs.create({"url": registerLink}, function (tab) {
-            tabsOpened[tab.id] =
-            {"username": username, "password": password, "url": registerLink, "task": request.message};
+            console.log("createdWindow", createdWindow);
+            windowIdMaps.push({
+                id: createdWindow.id,
+            });
+
+            tabsOpened[createdWindow.tabs[0].id] = {"task": request.message};
+
+            console.log("windowIdMaps", windowIdMaps);
+            console.log("tabsOpened", tabsOpened);
+            //alert("new window created");
         });
+
+        console.log("sender", sender);
+
+
+        //focusWindow(sender.tab)
+
+        //chrome.tabs.executeScript(sender.tab.id, {
+        //    allFrames: true,
+        //    file: 'testIframe.js'
+        //});
+        /*
+         /!* generate an iFrame *!/
+         const registerLink = request.registerLink;
+         const userId = request.userId;
+         const appId = request.appId;
+         const regType = request.regType;
+         const username = request.account;
+         const origin = request.origin;
+
+         var iframe;
+         iframe = document.createElement('iframe');
+         iframe.src = registerLink;
+         iframe.width = "500";
+         iframe.height = "500";
+         //iframe.id = "iframe";
+         //iframe.style.display = 'none';
+         document.body.appendChild(iframe);
+
+         iframe.onload = function(){
+         const cellNumber = "7097490481";
+         const password = "7097490481";
+         const nickName = "ChenLi_zhangyu";
+         const email = "lulugeo.li+account@gmail.com";
+         const firstName = "Chen";
+         const lastName = "Li";
+
+         //Dropbox
+         document.getElementsByClassName("login-register-switch-link")[0].click();
+         setTimeout(function(){
+         document.querySelectorAll("input[name='fname']")[0].value = firstName;
+         document.querySelectorAll("input[name='lname']")[0].value = firstName;
+         document.querySelectorAll("input[name='email'][type='email']")[0].value = email;
+         document.querySelectorAll("input[name='password'][type='password']")[0].value = password;
+         document.querySelectorAll("input[type='checkbox'][name='tos_agree']")[0].checked = true;
+         document.querySelectorAll("button[class='login-button button-primary'][type='submit']")[2].click();
+         },2500);
+         };
+         */
+
+        /* ************ Open in original tab *************/
+        //console.log("sender.tab", sender.tab.id);
+        //chrome.tabs.executeScript(sender.tab.id, {
+        //    allFrames: true,
+        //    file: 'testIframe.js'
+        //});
+
+        /* **************** register in new tab ********************* */
+        //const registerLink = request.registerLink;
+        //const userId = request.userId;
+        //const appId = request.appId;
+        //const regType = request.regType;
+        //const username = request.account;
+        //const origin = request.origin;
+        //
+        ////TODO 生成password
+        //const password = "Abc123***!";
+        //
+        //chrome.tabs.create({"url": registerLink}, function (tab) {
+        //    tabsOpened[tab.id] =
+        //    {"username": username, "password": password, "url": registerLink, "task": request.message};
+        //});
+
     }
 });
 
+chrome.webRequest.onHeadersReceived.addListener(
+    function (info) {
+        var headers = info.responseHeaders;
+        for (var i = headers.length - 1; i >= 0; --i) {
+            var header = headers[i].name.toLowerCase();
+            if (header == 'x-frame-options' || header == 'frame-options') {
+                headers.splice(i, 1); // Remove header
+            }
+        }
+        return {responseHeaders: headers};
+    },
+    {
+        urls: ['*://*/*'], // Pattern to match all http(s) pages
+        types: ['sub_frame']
+    },
+    ['blocking', 'responseHeaders']
+);
+
+/*
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (tabsOpened[tabId]) {
         const username = tabsOpened[tabId].username;
@@ -173,6 +293,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         }
     }
 });
+*/
 
 
 //chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
