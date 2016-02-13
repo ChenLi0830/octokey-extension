@@ -10,6 +10,12 @@
         "https://*/",
         "http://*/"
     ],
+    "externally_connectable": {
+        "matches": [
+            "http://localhost:3000/*",
+            "http://114.215.98.118/*"
+        ]
+    },
     "browser_action": {
         "default_icon": "icon.png"
     },
@@ -36,16 +42,24 @@
             ],
             "js": [
                 "credentialFill.js",
-                "register.js",
-                "jquery-1.7.1.min.js",
-                "jquery.simulate.js",
-                "jquery.simulate.ext.js",
-                "bililiteRange.js",
-                "jquery.simulate.key-sequence.js",
-                "jquery.simulate.drag-n-drop.js"
+                "lib/jquery-1.7.1.min.js",
+                "lib/jquery.simulate.js",
+                "lib/jquery.simulate.ext.js",
+                "lib/bililiteRange.js",
+                "lib/jquery.simulate.key-sequence.js",
+                "lib/jquery.simulate.drag-n-drop.js"
             ],
             "run_at": "document_start",
             "all_frames": true
+        },
+        {
+            "matches": [
+                "https://github.com/*"
+            ],
+            "js": [
+                "register/github.js"
+            ],
+            "run_at": "document_end"
         }
     ]
 }
