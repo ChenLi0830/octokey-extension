@@ -1,4 +1,4 @@
-(function() {
+(function () {
     window.tabsOpened = {};
     var authTabs = [];
     window.windowIdMaps = [];
@@ -15,14 +15,14 @@
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         switch (request.message) {
             case "new_tab_login":
-                const loginLink = request.loginLink;
-                const username = request.username;
-                const userId = request.userId;
-                const appId = request.appId;
-                const password = request.password;
-                const hexIv = request.hexIv;
-                const hexKey = request.hexKey;
-                const origin = request.origin;
+                const loginLink = request.loginLink,
+                    username = request.username,
+                    userId = request.userId,
+                    appId = request.appId,
+                    password = request.password,
+                    hexIv = request.hexIv,
+                    hexKey = request.hexKey,
+                    origin = request.origin;
                 //const password = request.password;
 
                 chrome.tabs.create({"url": loginLink}, function (tab) {
@@ -63,7 +63,11 @@
                         id: createdWindow.id,
                     });
 
-                    tabsOpened[createdWindow.tabs[0].id] = {"task": request.message, "windowId":createdWindow.id, "step": 0, "senderTabId":sender.tab.id};
+                    tabsOpened[createdWindow.tabs[0].id] =
+                    {
+                        "task": request.message, "windowId": createdWindow.id, "step": 0, "senderTabId": sender.tab.id,
+                        "appId": request.appId, "userProfile": request.profile, "userId": request.userId,
+                    };
 
                     console.log("windowIdMaps", windowIdMaps);
                     console.log("tabsOpened", tabsOpened);
@@ -102,16 +106,35 @@
                     }
                     break;
                 case "new_tab_register":
-                    chrome.tabs.sendMessage(tabId,
-                        {event: "new_register_opened", step: tabsOpened[tabId].step},
+                    if (tabsOpened[tabId].lastStep>=tabsOpened[tabId].step) return;
+
+                    const senderTabId = tabsOpened[tabId].senderTabId;
+                    const password = generatePassword();
+                    //console.log("tabsOpened[tabId]",tabsOpened[tabId]);
+                    console.log("password", password);
+                    tabsOpened[tabId].lastStep = tabsOpened[tabId].step;
+                    chrome.tabs.sendMessage(tabId, {
+                            event: "new_register_opened",
+                            step: tabsOpened[tabId].step,
+                            password: password,
+                            profile: tabsOpened[tabId].userProfile,
+                        },
                         function (response) {
-                            const senderTabId = tabsOpened[tabId].senderTabId;
-                            chrome.tabs.sendMessage(senderTabId, {type: "registerProgress",
-                            progress:response.progress, message: response.message});
+                            if (response.username) console.log("response", response);
+                            response.type = "registerProgress";
+                            response.tabId = tabId;
+                            response.appId = tabsOpened[tabId].appId;
+                            response.userId = tabsOpened[tabId].userId;
+                            chrome.tabs.sendMessage(senderTabId, response);
+
+                            console.log("response.step", response.step);
                             tabsOpened[tabId].step = response.step;
-                            if (tabsOpened[tabId].step===-1){//Remove the tab when its closed.
+                            if (response.step <= -1) {//Remove the tab when its ready to be closed.
                                 chrome.windows.remove(tabsOpened[tabId].windowId);
                                 delete tabsOpened[tabId];
+                            }
+                            if (response.step === -2) {
+                                //Todo report error.
                             }
                         });
                     break;
@@ -119,10 +142,7 @@
         }
     });
 
-
-
     // Register
-
     chrome.webRequest.onHeadersReceived.addListener(
         function (info) {
             var headers = info.responseHeaders;

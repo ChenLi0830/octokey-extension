@@ -47,7 +47,8 @@
                 "lib/jquery.simulate.ext.js",
                 "lib/bililiteRange.js",
                 "lib/jquery.simulate.key-sequence.js",
-                "lib/jquery.simulate.drag-n-drop.js"
+                "lib/jquery.simulate.drag-n-drop.js",
+                "general.js"
             ],
             "run_at": "document_start",
             "all_frames": true
@@ -60,6 +61,25 @@
                 "register/github.js"
             ],
             "run_at": "document_end"
+        },
+        {
+            "matches": [
+                "https://reg.taobao.com/*"
+            ],
+            "js": [
+                "register/taobao.js"
+            ],
+            "run_at": "document_end"
+        },
+        {
+            "matches": [
+                "https://www.dropbox.com/*"
+            ],
+            "js": [
+                "register/dropbox.js"
+            ],
+            "run_at": "document_end"
         }
     ]
 }
+

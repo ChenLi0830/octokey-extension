@@ -7,27 +7,24 @@ window.onload = function () {
 };
 
 window.addEventListener("message", function (event) {
-    console.log("event", event);
-    console.log("event.data", event.data);
+    //console.log("event", event);
+    //console.log("event.data", event.data);
     //console.log(document.location.origin);
     var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the
                                                              // event.originalEvent object.
     if (origin !== document.location.origin) {//make sure message comes from the web app.
         return;
     }
-    if (event.data.type === "logIn") {
+    if (event.data.event === "logIn") {
         this.handleLogin(event, origin);
     }
-    else if (event.data.type === "register") {
+    else if (event.data.event === "register") {
         this.handleRegister(event, origin);
     }
 }, false);
 
-
 function handleLogin(event, origin) {
-    if (event.data.type == "logIn") {
-        //console.log("event.data", event.data);
-        //console.log("event.origin", event.origin);
+    if (event.data.event == "logIn") {
         event.data.message = "new_tab_login";
         event.data.origin = origin;
         chrome.runtime.sendMessage(event.data);
@@ -37,19 +34,15 @@ function handleLogin(event, origin) {
 }
 
 function handleRegister(event, origin) {
-    if (event.data.type == "register") {
-
-        /* Initialization */
+    if (event.data.event == "register") {
         event.data.message = "new_tab_register";
 
         //const registerLink = "https://reg.taobao.com/member/reg/fill_mobile.htm";
         //const registerLink = "//user.quna.com/Reg.aspx";
         //const registerLink = "https://www.dropbox.com/login";
-        const registerLink = "https://github.com/join";
-        event.data.registerLink = registerLink;
+        //const registerLink = "https://github.com/join";
+        //event.data.registerLink = registerLink;
 
-        //Todo send this only to our extension: extensionId
-        //完成register部分
         chrome.runtime.sendMessage(event.data);
     } else {
         console.log("Invalid call for handleRegister function.")
@@ -58,16 +51,10 @@ function handleRegister(event, origin) {
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type === "registerProgress") {
-        var progress = request.progress,
-            message = request.message;
         console.log("request", request);
+        window.postMessage(//Communicate with web page
+            request,
+            document.location.origin
+        );
     }
-    window.postMessage(//Communicate with plugin
-        {
-            type: "registerProgress",
-            progress: progress,
-            message: message,
-        },
-        document.location.origin
-    );
 });
