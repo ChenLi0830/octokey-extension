@@ -18,6 +18,8 @@
 
                     tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
                     tabsOpened[tabId].doneGettingPwd = true;
+
+//                    chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
                     //console.log("doneGettingPwd - tabsOpened[tabId]", tabsOpened[tabId]);
                     loginIfReady(tabId);
 
@@ -55,13 +57,13 @@
             console.log("login start for ", tabsOpened[tabId].url);
             delete tabsOpened[tabId];
 
-            setTimeout(function () {
-                chrome.tabs.sendMessage(tabId,
-                    {event: "new_login_opened", username: username, password: password},
-                    function (response) {
-                        console.log(response);
-                    });
-            }, 100);
+            //setTimeout(function () {
+            chrome.tabs.sendMessage(tabId,
+                {event: "new_login_opened", username: username, password: password},
+                function (response) {
+                    console.log(response);
+                });
+            //}, 100);
         }
     }
 

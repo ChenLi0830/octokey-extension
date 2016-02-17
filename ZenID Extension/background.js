@@ -26,12 +26,12 @@
                 //const password = request.password;
 
                 chrome.tabs.create({"url": loginLink}, function (tab) {
+                    tabsOpened[tab.id] =
+                    {"username": username, "url": loginLink, "task": request.message, "overlay": true}
                     if (password.length === 0) {
-                        tabsOpened[tab.id] = {"username": username, "url": loginLink, "task": request.message};
                         getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
                     } else {
-                        tabsOpened[tab.id] =
-                        {"username": username, "password": password, "url": loginLink, "task": request.message};
+                        tabsOpened[tab.id].password = password;
                         tabsOpened[tab.id].doneGettingPwd = true;
                     }
                 });
@@ -51,7 +51,7 @@
                     top: 500,
                     focused: false,
                     height: 1,
-                    width: 1
+                    width: 1,
                 }, function (createdWindow) {
                     //第一件事就是focus回之前的window
                     chrome.windows.update(sender.tab.windowId, {
@@ -106,7 +106,7 @@
                     }
                     break;
                 case "new_tab_register":
-                    if (tabsOpened[tabId].lastStep>=tabsOpened[tabId].step) return;
+                    if (tabsOpened[tabId].lastStep >= tabsOpened[tabId].step) return;
 
                     const senderTabId = tabsOpened[tabId].senderTabId;
                     const password = generatePassword();
@@ -137,6 +137,32 @@
                                 //Todo report error.
                             }
                         });
+                    break;
+            }
+        }
+    });
+
+    chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
+        const tabId = details.tabId;
+        //chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+        if (tabsOpened[tabId]) {
+            //if (changeInfo.status === "loading") {
+            switch (tabsOpened[tabId].task) {
+                case "new_tab_login":
+                    if (tabsOpened[tabId].overlay === true)
+                    //if (tabsOpened[tabId].doneGettingPwd === false) {//If the password is not obtained yet
+                    {
+                        tabsOpened[tabId].overlay = false;
+                        console.log("tabId", tabId, "tabsOpened[tabId].overlay", tabsOpened[tabId].overlay = false);
+                        chrome.tabs.executeScript(tabId, {file: "passwordOverlay.js", runAt: "document_start"});
+                        chrome.tabs.insertCSS(tabId, {file: "overlay.css", runAt: "document_start"});
+                        setTimeout(function () {
+                            chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
+                        }, 1500);
+                        //}
+                        break;
+                    }
+                case "new_tab_register":
                     break;
             }
         }

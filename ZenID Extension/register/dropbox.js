@@ -12,24 +12,18 @@
                     case 0:
                         setTimeout(function () {
                             try {
-                                document.getElementsByClassName("login-register-switch-link")[0].click();
+                                $(".login-register-switch-link")[0].click();
                                 setTimeout(function () {
                                     try {
-                                        document.querySelectorAll("input[name='fname']")[0].value =
-                                            request.profile.firstName;
-                                        document.querySelectorAll("input[name='lname']")[0].value =
-                                            request.profile.lastName;
-                                        document.querySelectorAll("input[name='email'][type='email']")[0].value =
-                                            request.profile.email;
-                                        document.querySelectorAll("input[name='password'][type='password']")[0].value =
-                                            request.password;
-                                        document.querySelectorAll(
-                                            "input[type='checkbox'][name='tos_agree']")[0].checked =
-                                            true;
-                                        document.querySelectorAll(
-                                            "button[class='login-button button-primary'][type='submit']")[2].click();
+                                        $("input[name='fname']").val(request.profile.firstName);
+                                        $("input[name='lname']").val(request.profile.lastName);
+                                        $("input[name='email'][type='email']").val(request.profile.email);
+                                        $("input[name='password'][type='password']").val(request.password);
+                                        $("input[type='checkbox'][name='tos_agree']")[0].checked = true;
+                                        $("button[class='login-button button-primary'][type='submit']")[2].click();
+
                                         sendResponse({
-                                            step: 1, progress: 50, message: "填写登录信息",
+                                            step: 1, progress: 50, message: "ext_msg_credential",
                                             username: request.profile.email,
                                             password: request.password,
                                         });
@@ -43,16 +37,18 @@
                         }, 500);
                         break;
                     case 1:
-                        sendResponse({step: 2, progress: 70, message: "发送注册信息"});
+                        $("#react-signup-recaptcha-challenge-div").height() === 0 ?
+                            sendResponse({step: 2, progress: 70, message: "ext_msg_register"})
+                            : sendResponse({step: 2, progress: 70, message: "ext_msg_register"})
                         break;
                     case 2:
-                        sendResponse({step: 3, progress: 90, message: "发送注册信息"});
+                        sendResponse({step: 3, progress: 90, message: "ext_msg_redirect"});
                         break;
                     case 3:
-                        sendResponse({step: 4, progress: 100, message: "注册成功!"});
+                        sendResponse({step: 4, progress: 100, message: "ext_msg_success"});
                         break;
                     case 4:
-                        sendResponse({step: -1, progress: 100, message: "注册成功!"});
+                        sendResponse({step: -1, progress: 100, message: "ext_msg_success"});
                         break;
                 }
             } catch (e) {
@@ -64,7 +60,7 @@
                 sendResponse({
                     step: -2,
                     progress: -100,
-                    message: "自动注册出错, 可能由原因导致: 1. 您的帐号已经注册过该网站 2. 注册前您已经登录该网站 3. 网站注册数据出错"
+                    message: "ext_msg_error"
                 });
             }
 
