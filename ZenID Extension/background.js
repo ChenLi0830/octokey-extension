@@ -27,7 +27,7 @@
 
                 chrome.tabs.create({"url": loginLink}, function (tab) {
                     tabsOpened[tab.id] =
-                    {"username": username, "url": loginLink, "task": request.message, "overlay": true}
+                    {"username": username, "url": loginLink, "task": request.message, "overlay": false};
                     if (password.length === 0) {
                         getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
                     } else {
@@ -149,16 +149,14 @@
             //if (changeInfo.status === "loading") {
             switch (tabsOpened[tabId].task) {
                 case "new_tab_login":
-                    if (tabsOpened[tabId].overlay === true)
-                    //if (tabsOpened[tabId].doneGettingPwd === false) {//If the password is not obtained yet
-                    {
-                        tabsOpened[tabId].overlay = false;
-                        console.log("tabId", tabId, "tabsOpened[tabId].overlay", tabsOpened[tabId].overlay = false);
+                    if (!tabsOpened[tabId].overlay){//If not put overlay yet
+                        tabsOpened[tabId].overlay = true;
                         chrome.tabs.executeScript(tabId, {file: "passwordOverlay.js", runAt: "document_start"});
                         chrome.tabs.insertCSS(tabId, {file: "overlay.css", runAt: "document_start"});
+                        if (tabsOpened[tabId].doneGettingPwd)
                         setTimeout(function () {
                             chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
-                        }, 1500);
+                        }, 1000);
                         //}
                         break;
                     }

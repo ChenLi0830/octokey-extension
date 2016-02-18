@@ -19,6 +19,10 @@
                     tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
                     tabsOpened[tabId].doneGettingPwd = true;
 
+                    if (tabsOpened[tabId].overlay){//已经放了overlay
+                        chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
+                    }
+
 //                    chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
                     //console.log("doneGettingPwd - tabsOpened[tabId]", tabsOpened[tabId]);
                     loginIfReady(tabId);

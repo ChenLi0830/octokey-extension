@@ -12,6 +12,12 @@
 
         // Some styles for a fancy sidebar
         document.body.appendChild(iframe);
+
+        //document.body.removeChild(iframe);
+        //
+        ////iframe.src = chrome.runtime.getURL('overlay.html');
+        //iframe.src = chrome.runtime.getURL('overlay_complete.html');
+        //document.body.appendChild(iframe);
     }
 
     //var body = document.querySelector("body");

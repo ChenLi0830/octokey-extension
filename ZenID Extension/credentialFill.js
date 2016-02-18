@@ -78,7 +78,7 @@
                     console.log("find 1 login anchor, click", loginButtons[0]);
                     if (filledUsername && filledPassword) {
                         setTimeout(function () {
-                            //loginButtons[0].click()
+                            loginButtons[0].click()
                         }, 300);
                         //填好后等0.3秒再点,这个会解决部分网页的no response
                     } else {
