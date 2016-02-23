@@ -1,7 +1,6 @@
 (function () {
     window.tabsOpened = {};
     var authTabs = [];
-    window.windowIdMaps = [];
     var iframeSiteList = [
         "https://login.tmall.com/",
         "http://i.xunlei.com/login.html",
@@ -58,19 +57,13 @@
                         focused: true
                     });
 
-                    //console.log("createdWindow", createdWindow);
-                    windowIdMaps.push({
-                        id: createdWindow.id,
-                    });
-
                     tabsOpened[createdWindow.tabs[0].id] =
                     {
                         "task": request.message, "windowId": createdWindow.id, "step": 0, "senderTabId": sender.tab.id,
                         "appId": request.appId, "userProfile": request.profile, "userId": request.userId,
                     };
 
-                    console.log("windowIdMaps", windowIdMaps);
-                    console.log("tabsOpened", tabsOpened);
+                    //console.log("tabsOpened", tabsOpened);
                     //alert("new window created");
                 });
                 break;
@@ -95,7 +88,7 @@
     //chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
     chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
         const tabId = details.tabId;
-        console.log("tabsOpened", tabsOpened);
+        //console.log("tabsOpened", tabsOpened);
         if (tabsOpened[tabId]) {
             switch (tabsOpened[tabId].task) {
                 case "new_tab_login":
