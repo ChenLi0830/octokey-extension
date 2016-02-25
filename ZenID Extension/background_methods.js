@@ -1,4 +1,4 @@
-(function() {
+(function () {
     window.getPassword = function (username, userId, appId, origin, tabId, hexIv, hexKey) {
         const urlSplit = origin.split("//");
         //console.log("urlSplit",urlSplit);
@@ -18,13 +18,6 @@
 
                     tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
                     tabsOpened[tabId].doneGettingPwd = true;
-
-                    if (tabsOpened[tabId].overlay){//已经放了overlay
-                        chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
-                    }
-
-//                    chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
-                    //console.log("doneGettingPwd - tabsOpened[tabId]", tabsOpened[tabId]);
                     loginIfReady(tabId);
 
                 })
@@ -52,9 +45,9 @@
 
         //console.log("decrypted text:", hex2a(plaintextArray.toString());
         return hex2a(plaintextArray.toString());
-    }
+    };
 
-    window.loginIfReady = function(tabId) {
+    window.loginIfReady = function (tabId) {
         if (tabsOpened[tabId].doneGettingPwd && tabsOpened[tabId].doneLoadingPage) {
             const username = tabsOpened[tabId].username;
             const password = tabsOpened[tabId].password;
@@ -63,32 +56,31 @@
 
             //setTimeout(function () {
             chrome.tabs.sendMessage(tabId,
-                {event: "new_login_opened", username: username, password: password},
+                {event: "new_login_opened", username: username, password: password, tabId:tabId},
                 function (response) {
                     console.log(response);
                 });
-            //}, 100);
         }
-    }
+    };
 
-    window.generatePassword = function(len){
-        var length = (len)?(len):(12);
+    window.generatePassword = function (len) {
+        var length = (len) ? (len) : (12);
         var string = "abcdefghijklmnopqrstuvwxyz"; //to upper
         var numeric = '0123456789';
         var punctuation = '!@#$%^&*()_+~`|}{[]\:;?><,./-=';
         var password = "";
         var character = "";
         var crunch = true;
-        var entity1, entity2, entity3,hold;
-        while( password.length<length ) {
-            entity1 = Math.ceil(string.length * Math.random()*Math.random());
-            entity2 = Math.ceil(numeric.length * Math.random()*Math.random());
-            entity3 = Math.ceil(punctuation.length * Math.random()*Math.random());
-            hold = string.charAt( entity1 );
-            hold = (entity1%2==0)?(hold.toUpperCase()):(hold);
+        var entity1, entity2, entity3, hold;
+        while (password.length < length) {
+            entity1 = Math.ceil(string.length * Math.random() * Math.random());
+            entity2 = Math.ceil(numeric.length * Math.random() * Math.random());
+            entity3 = Math.ceil(punctuation.length * Math.random() * Math.random());
+            hold = string.charAt(entity1);
+            hold = (entity1 % 2 == 0) ? (hold.toUpperCase()) : (hold);
             character += hold;
-            character += numeric.charAt( entity2 );
-            character += punctuation.charAt( entity3 );
+            character += numeric.charAt(entity2);
+            character += punctuation.charAt(entity3);
             password = character;
         }
         return password;

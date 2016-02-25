@@ -14,97 +14,136 @@
             //alert("login start");
             const username = request.username;
             const password = request.password;
-            var filledUsername = false;
-            var filledPassword = false;
-            //console.log("trying to login using username", username, "password", password);
-            //const username = "test";
-            //const password = "1234567";
+            var maxLoginCounter = 10;
 
-            var inputs = document.getElementsByTagName("input");    //look for all inputs
-            //console.log("inputs",inputs);
-            var passwordForms = [];
-            var passwordInputs = [];
-            var Captcha = null;
+            var smartFillInterval = setInterval(smartFillIn.bind(window, username, password, false, false), 1000);
 
-            for (var i = 0; i < inputs.length; i++) {
-                //for each input on document
-                var input = inputs[i];     //look at whatever input
-                if (isVisible(input)) {//Make sure the login is visible
-                    console.log("input", i, input);
-                    if (isCaptcha(input)) {
-                        console.log("found captcha");
-                        Captcha = input;
-                    }
-                    else if (isUsername(input)) {
-                        console.log("found username");
-                        input.focus();
-                        input.value = username;
-                        input.blur();
-                        filledUsername = true;
-                    }
-                    else if (isPassword(input)) {
-                        console.log("found password");
-                        //input.focus();
-                        input.value = password;
-                        filledPassword = true;
-                        passwordInputs.push(input);
-                        var parentForm = closest(input, "form");
-                        console.log(parentForm);
-                        if (parentForm) passwordForms.push(parentForm);
-                    }
-                    else console.log("input doesn't belong to anything:", input);
+            var i = 0;
+
+            function smartFillIn(username, password) {
+                //console.log("start login trail");
+                maxLoginCounter--;
+                if (maxLoginCounter === 0) {
+                    chrome.runtime.sendMessage(
+                        {message: "close_login_overflow", status: "reachMaximum", tabId: request.tabId});
+                    clearInterval(smartFillInterval);//Stop smart filling interval
+                    return "Reached maximum login trail";
                 }
-            }
 
-            //alert("passwordForms length is "+passwordForms.length);
-            if (!Captcha) {//如果没有验证码 -> 登录
-                console.log("doesn't have Captcha");
+                var inputs = document.getElementsByTagName("input");    //look for all inputs
+
+                /* Fill in necessary information */
+                var filledUsername = findAndFill(inputs, {name: "username", value: username});
+                var passResult = findAndFill(inputs, {name: "password", value: password});
+                var filledPassword = passResult.isFound;
+                var passwordForms = passResult.passwordForms;
+
                 console.log("passwordForms", passwordForms);
-                console.log("passwordInputs.length", passwordInputs.length);
-
-                if (!filledUsername) {//精确查找找不到username,就用brute force
-                    bruteForceFillUsername();
-                }
 
                 var loginButtons = getLoginButtons(passwordForms);
 
-                //Todo make this a method and make it apply general cases
-                setTimeout(function () {
-                    $('#_n1z')
-                        .simulate("drag-n-drop", {dx: 300, interpolation: {stepWidth: 10, stepDelay: 50}});
-                }, 1000);
-
-                if (loginButtons.length === 1) {
-                    console.log("find 1 login anchor, click", loginButtons[0]);
-                    if (filledUsername && filledPassword) {
-                        setTimeout(function () {
-                            loginButtons[0].click()
-                        }, 300);
-                        //填好后等0.3秒再点,这个会解决部分网页的no response
-                    } else {
-                        console.log("filledUsername", filledUsername, "filledPassword", filledPassword);
-                    }
-                } else {
-                    console.log("there are", loginButtons.length, "login anchor+button", loginButtons)
+                //validate if login can be processed
+                if (!filledUsername || !filledPassword) {
+                    console.log("filledUsername", filledUsername, "filledPassword", filledPassword);
+                    return "can't find username or password";
                 }
 
-            } else {//如果有验证码,focus在验证码上
-                Captcha.focus();
-                console.log("有验证码,暂停登录");
+                if (loginButtons.length != 1) {
+                    console.log("there are", loginButtons.length, "login anchor+button", loginButtons);
+                    if (loginButtons.length > 1) {
+                        chrome.runtime.sendMessage(
+                            {message: "close_login_overflow", status: "needManualClick", tabId: request.tabId});
+                        clearInterval(smartFillInterval);//Stop smart filling interval
+                        return "Too many loginButtons";
+                    } else {
+                        return "Can't find loginButton";
+                    }
+                }
+
+                /* 开始login */
+                setTimeout(function () {
+                    /* 检查captcha */
+                    var potentialCapts = $('*[id*=captcha]:visible');
+                    var captchasFound = findAndFill(potentialCapts, {name: "captcha"});
+
+                    if (captchasFound.length > 0) {
+                        captchasFound.length === 1 && captchasFound[0].type === "text" && captchasFound[0].focus();
+                        chrome.runtime.sendMessage(
+                            {message: "close_login_overflow", status: "captchaExist", tabId: request.tabId});
+                        clearInterval(smartFillInterval);//Stop smart filling interval
+                        return "有验证码, 暂停登录";
+                    }
+
+                    /* login */
+                    console.log("find 1 login anchor, click", loginButtons[0]);
+                    chrome.runtime.sendMessage(
+                        {message: "close_login_overflow", status: "successful", tabId: request.tabId});
+                    clearInterval(smartFillInterval);//Stop trying when finds all the elements
+
+                    loginButtons[0].click();//Todo 判断是否真的登录了,没有的话重复以上步骤但不click
+                    return "login clicked";
+                }, 500);
             }
 
+            function findAndFill(elementArray, targetEl) {
+                var elIsFound = false,
+                    elementsFound = [],
+                    fill = (targetEl.value != null),//fill-in flag for whether filling targetEl with value
+                    passwordForms = [];
 
-            function closest(el, selector) {//similar to jquery's closest method
-                var matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector ||
-                    el.msMatchesSelector;
+                for (var i = 0; i < elementArray.length; i++) {
+                    var element = elementArray[i];//look at whatever input
 
-                while (el) {
-                    if (matchesSelector.call(el, selector)) {
-                        break;
+                    if (isVisible(element)) {//Make sure the login is visible
+
+                        if (targetEl.name === "captcha" && isCaptcha(element)) {
+                            elementsFound.push(element);
+                            elIsFound = true;
+                        }
+
+                        if (targetEl.name === "username" && isUsername(element)) {
+                            elementsFound.push(element);
+                            elIsFound = true;
+
+                            if (fill) {
+                                element.focus();
+                                element.value = targetEl.value;
+                                element.blur();
+                            }
+                        }
+
+                        if (targetEl.name === "password" && isPassword(element)) {
+                            elementsFound.push(element);
+                            elIsFound = true;
+
+                            if (fill) {
+                                element.focus();
+                                element.value = targetEl.value;
+                                element.blur();
+                            }
+
+                            var passwordForm = element.form || $(element).closest("form");//找到这个password对应的form
+                            if (passwordForm) passwordForms.push(passwordForm);
+                        }
                     }
-                    el = el.parentElement;
                 }
-                return el;
+
+                if (targetEl.name === "username" && targetEl.value && !elIsFound) {//If username needs to be filled,
+                    // try brute force
+                    elIsFound = bruteForceFillUsername(targetEl.value);
+                }
+
+                if (elIsFound) {//Log founded elements
+                    targetEl.name === "captcha" && console.log("found captcha");
+                    targetEl.name === "username" && console.log("found username");
+                    targetEl.name === "password" && console.log("found password");
+                    console.log("founded " + targetEl.name + " : ", elementsFound);
+                }
+
+                if (targetEl.name === "username") return elIsFound;
+                if (targetEl.name === "password") return {isFound: elIsFound, passwordForms: passwordForms};
+                if (targetEl.name === "captcha") return elementsFound;
+
             }
 
             function isVisible(el) {//Check if the element is visible
@@ -152,8 +191,9 @@
                     (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录"))
             }
 
-            function isCaptcha(input) {
-                return (input.type == "text" && input.placeholder.indexOf("验证码") != -1);
+            function isCaptcha(element) {
+                return true;
+                //return (element.type == "text" && element.placeholder.indexOf("验证码") != -1);
             }
 
             function getLoginButtons(passwordForms) {
@@ -163,7 +203,7 @@
                 if (passwordForms.length > 0) {//有form的情况:只在forms里找anchor
                     console.log("password form number: ", passwordForms.length);
                     for (i = 0; i < passwordForms.length; i++) {
-                        var form = passwordForms[i];
+                        var form = passwordForms[i].form || passwordForms[i];
                         anchors = anchors.concat(
                             Array.prototype.slice.call(form.querySelectorAll("a[href^='javascript'], a[href^='#']")));
                         buttons = buttons.concat(Array.prototype.slice.call(form.querySelectorAll("button")));
@@ -205,8 +245,9 @@
                 return loginElements;
             }
 
-            function bruteForceFillUsername() {
-                inputs = document.querySelectorAll("input[type='text'], input[type='email']");
+            function bruteForceFillUsername(username) {
+                var inputs = document.querySelectorAll("input[type='text'], input[type='email']");
+                var filledUsername = false;
                 for (i = 0; i < inputs.length; i++) {
                     var input = inputs[i];
                     if (isVisible(input)) {
@@ -216,6 +257,7 @@
                         filledUsername = true;
                     }
                 }
+                return filledUsername;
             }
         });
 

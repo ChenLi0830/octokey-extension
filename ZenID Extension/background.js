@@ -1,15 +1,15 @@
 (function () {
     window.tabsOpened = {};
     var authTabs = [];
-    var iframeSiteList = [
-        "https://login.tmall.com/",
-        "http://i.xunlei.com/login.html",
-        "https://pan.baidu.com/",
-        "https://passport.baidu.com/v2/?login",
-        "http://www.nuomi.com/pclogin/main/loginpage",
-        "http://passport.acfun.tv/login/",
-        "https://login.taobao.com/"
-    ];
+    //var iframeSiteList = [
+    //    "https://login.tmall.com/",
+    //    "http://i.xunlei.com/login.html",
+    //    "https://pan.baidu.com/",
+    //    "https://passport.baidu.com/v2/?login",
+    //    "http://www.nuomi.com/pclogin/main/loginpage",
+    //    "http://passport.acfun.tv/login/",
+    //    "https://login.taobao.com/"
+    //];
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         switch (request.message) {
@@ -27,6 +27,7 @@
                 chrome.tabs.create({"url": loginLink}, function (tab) {
                     tabsOpened[tab.id] =
                     {"username": username, "url": loginLink, "task": request.message, "overlay": false};
+
                     if (password.length === 0) {
                         getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
                     } else {
@@ -38,11 +39,6 @@
 
             case "new_tab_register":
                 const registerLink = request.registerLink;
-                //const userId = request.userId;
-                //const appId = request.appId;
-                //const accountType = request.accountType;
-                //const username = request.account;
-                //const origin = request.origin;
 
                 chrome.windows.create({
                     url: registerLink,
@@ -67,36 +63,32 @@
                     //alert("new window created");
                 });
                 break;
+            case "close_login_overflow":
+                // remove layout
+                chrome.tabs.executeScript(request.tabId, {file: "passwordObtained.js", runAt: "document_start"});
+                break;
         }
     });
 
-    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-        //alert("tab.url:"+ tab.url);
-        if (tabsOpened[tabId]) {//从background js里创建的（收到zenID的request才打开的tab）
-            if (tabsOpened[tabId].task !== "new_tab_login") return;
-
-            if ($.inArray(tabsOpened[tabId].url, iframeSiteList) > -1) {//在iframeSiteList名单里
-                if (changeInfo.status === "complete") {
-                    //console.log("chrome.tabs.onUpdated logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
-                    tabsOpened[tabId].doneLoadingPage = true;
-                    loginIfReady(tabId);
-                }
-            }
-        }
-    });
-
-    //chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
-    chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
+    chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onDOMContentLoaded来login
+        //chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
         const tabId = details.tabId;
         //console.log("tabsOpened", tabsOpened);
         if (tabsOpened[tabId]) {
             switch (tabsOpened[tabId].task) {
                 case "new_tab_login":
-                    if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
-                        //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
-                        tabsOpened[tabId].doneLoadingPage = true;
-                        loginIfReady(tabId);
+                    if (!tabsOpened[tabId].overlay) {//If not put overlay yet
+                        tabsOpened[tabId].overlay = true;
+                        console.log("getting password");
+                        chrome.tabs.executeScript(tabId, {file: "passwordOverlay.js", runAt: "document_start"});
+                        chrome.tabs.insertCSS(tabId, {file: "overlay.css", runAt: "document_start"});
                     }
+
+                    //if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1 || true) {//不包含在iframeSiteList的名单里
+                    //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
+                    tabsOpened[tabId].doneLoadingPage = true;
+                    loginIfReady(tabId);
+                    //}
                     break;
                 case "new_tab_register":
                     if (tabsOpened[tabId].lastStep >= tabsOpened[tabId].step) return;
@@ -130,30 +122,6 @@
                                 //Todo report error.
                             }
                         });
-                    break;
-            }
-        }
-    });
-
-    chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
-        const tabId = details.tabId;
-        //chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-        if (tabsOpened[tabId]) {
-            //if (changeInfo.status === "loading") {
-            switch (tabsOpened[tabId].task) {
-                case "new_tab_login":
-                    if (!tabsOpened[tabId].overlay){//If not put overlay yet
-                        tabsOpened[tabId].overlay = true;
-                        chrome.tabs.executeScript(tabId, {file: "passwordOverlay.js", runAt: "document_start"});
-                        chrome.tabs.insertCSS(tabId, {file: "overlay.css", runAt: "document_start"});
-                        if (tabsOpened[tabId].doneGettingPwd)
-                        setTimeout(function () {
-                            chrome.tabs.executeScript(tabId, {file: "passwordObtained.js", runAt: "document_start"});
-                        }, 1000);
-                        //}
-                        break;
-                    }
-                case "new_tab_register":
                     break;
             }
         }
