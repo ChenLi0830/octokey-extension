@@ -3,8 +3,7 @@
 
     iframe.src = chrome.runtime.getURL('overlay_complete.html');
 
-
-    setTimeout(function(){iframe.style.zIndex=-2147483647;iframe.style.display="none"},1500);
+    setTimeout(function(){iframe.style.zIndex=-2147483647;iframe.style.display="none"},500);
     /*//document.removeChild(iframe);
     var transitionTime = 1;
     var transitionStyle = "opacity " + transitionTime + "s, background-color " + transitionTime + "s, -webkit-transform " +
