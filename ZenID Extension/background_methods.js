@@ -16,10 +16,11 @@
                     const objKey = Object.keys(credentialObj)[0];
                     const encryptedPwd = credentialObj[objKey]["publicApps"][0]["password"];
 
-                    tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
-                    tabsOpened[tabId].doneGettingPwd = true;
-                    loginIfReady(tabId);
-
+                    if (tabsOpened[tabId]) {//If login process is not stopped for any reason
+                        tabsOpened[tabId].password = decryptAES(encryptedPwd, hexIv, hexKey);
+                        tabsOpened[tabId].doneGettingPwd = true;
+                        loginIfReady(tabId);
+                    }
                 })
                 .fail(function (err) {
                     console.log('there is some error', err);
@@ -56,7 +57,7 @@
 
             //setTimeout(function () {
             chrome.tabs.sendMessage(tabId,
-                {event: "new_login_opened", username: username, password: password, tabId:tabId},
+                {event: "new_login_opened", username: username, password: password, tabId: tabId},
                 function (response) {
                     console.log(response);
                 });

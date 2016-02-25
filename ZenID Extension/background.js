@@ -127,6 +127,14 @@
         }
     });
 
+    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+        if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&
+            changeInfo.url != tabsOpened[tabId].url) {//如果tabUrl is updated(user's already logged in), stop login
+            console.log("tab " + tabId + "'s url is updated to", changeInfo.url, "stop login script for this page");
+            delete tabsOpened[tabId];
+        }
+    });
+
     // Register
     chrome.webRequest.onHeadersReceived.addListener(
         function (info) {
