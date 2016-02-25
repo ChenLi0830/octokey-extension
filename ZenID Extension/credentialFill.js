@@ -147,7 +147,7 @@
             }
 
             function isVisible(el) {//Check if the element is visible
-                return (el.offsetParent !== null)
+                return (el.offsetParent !== null && $(el).height()>0 && $(el).width()>0)
             }
 
             function isPassword(input) {
