@@ -20,7 +20,8 @@
     "externally_connectable": {
         "matches": [
             "http://localhost:3000/*",
-            "http://114.215.98.118/*"
+            "http://114.215.98.118/*",
+            "https://oyaoshi.com/*"
         ]
     },
     "browser_action": {
@@ -35,8 +36,7 @@
             "matches": [
                 "http://localhost:3000/*",
                 "http://114.215.98.118/*",
-                "http://zenid.meteor.com/*",
-                "http://zenid.nocland.com/*"
+                "https://oyaoshi.com/*"
             ],
             "js": [
                 "content.js"
@@ -50,12 +50,7 @@
             ],
             "js": [
                 "credentialFill.js",
-                "lib/jquery-1.7.1.min.js",
-                "lib/jquery.simulate.js",
-                "lib/jquery.simulate.ext.js",
-                "lib/bililiteRange.js",
-                "lib/jquery.simulate.key-sequence.js",
-                "lib/jquery.simulate.drag-n-drop.js",
+                "lib/jquery-2.2.0.js",
                 "general.js"
             ],
             "run_at": "document_start",
