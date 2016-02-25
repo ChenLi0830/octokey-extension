@@ -4,28 +4,28 @@
 
 (function () {
     chrome.runtime.onMessage.addListener(
-        function (request, sender, sendResponse) {
-            //console.log("credentialFill received request");
-            //console.log("request",request);
-            if (request.event !== "new_login_opened") {
-                //console.log("not new_login_opened event");
-                return;
+        function (message, sender, sendResponse) {
+
+            switch (message.event) {
+                case "new_login_opened":
+                    var maxLoginCounter = 10;
+                    var smartFillInterval = setInterval(
+                        smartFillIn.bind(window, message.username, message.password, false, false), 1000);
+                    break;
+
+                case "stop_login":
+                    console.log("credentialFill cancel");
+                    chrome.runtime.sendMessage(
+                        {message: "close_login_overflow", status: "stopped_by_background"});
+                    clearInterval(smartFillInterval);//Stop smart filling interval
             }
-            //alert("login start");
-            const username = request.username;
-            const password = request.password;
-            var maxLoginCounter = 10;
-
-            var smartFillInterval = setInterval(smartFillIn.bind(window, username, password, false, false), 1000);
-
-            var i = 0;
 
             function smartFillIn(username, password) {
                 //console.log("start login trail");
                 maxLoginCounter--;
                 if (maxLoginCounter === 0) {
                     chrome.runtime.sendMessage(
-                        {message: "close_login_overflow", status: "reachMaximum", tabId: request.tabId});
+                        {message: "close_login_overflow", status: "reachMaximum"});
                     clearInterval(smartFillInterval);//Stop smart filling interval
                     return "Reached maximum login trail";
                 }
@@ -37,8 +37,6 @@
                 var passResult = findAndFill(inputs, {name: "password", value: password});
                 var filledPassword = passResult.isFound;
                 var passwordForms = passResult.passwordForms;
-
-                console.log("passwordForms", passwordForms);
 
                 var loginButtons = getLoginButtons(passwordForms);
 
@@ -52,7 +50,7 @@
                     console.log("there are", loginButtons.length, "login anchor+button", loginButtons);
                     if (loginButtons.length > 1) {
                         chrome.runtime.sendMessage(
-                            {message: "close_login_overflow", status: "needManualClick", tabId: request.tabId});
+                            {message: "close_login_overflow", status: "needManualClick"});
                         clearInterval(smartFillInterval);//Stop smart filling interval
                         return "Too many loginButtons";
                     } else {
@@ -69,7 +67,7 @@
                     if (captchasFound.length > 0) {
                         captchasFound.length === 1 && captchasFound[0].type === "text" && captchasFound[0].focus();
                         chrome.runtime.sendMessage(
-                            {message: "close_login_overflow", status: "captchaExist", tabId: request.tabId});
+                            {message: "close_login_overflow", status: "captchaExist"});
                         clearInterval(smartFillInterval);//Stop smart filling interval
                         return "有验证码, 暂停登录";
                     }
@@ -77,12 +75,12 @@
                     /* login */
                     console.log("find 1 login anchor, click", loginButtons[0]);
                     chrome.runtime.sendMessage(
-                        {message: "close_login_overflow", status: "successful", tabId: request.tabId});
+                        {message: "close_login_overflow", status: "successful"});
                     clearInterval(smartFillInterval);//Stop trying when finds all the elements
 
-                    loginButtons[0].click();//Todo 判断是否真的登录了,没有的话重复以上步骤但不click
+                    //loginButtons[0].click();//Todo 判断是否真的登录了,没有的话重复以上步骤但不click
                     return "login clicked";
-                }, 500);
+                }, 1000);
             }
 
             function findAndFill(elementArray, targetEl) {
@@ -122,7 +120,9 @@
                                 element.blur();
                             }
 
-                            var passwordForm = element.form || $(element).closest("form");//找到这个password对应的form
+                            var passwordForm = element.form || $(element).closest("form")[0];//找到这个password对应的form
+                            console.log("element", element);
+                            console.log("passwordForm", passwordForm);
                             if (passwordForm) passwordForms.push(passwordForm);
                         }
                     }
@@ -147,7 +147,7 @@
             }
 
             function isVisible(el) {//Check if the element is visible
-                return (el.offsetParent !== null && $(el).height()>0 && $(el).width()>0)
+                return (el.offsetParent !== null && $(el).height() > 0 && $(el).width() > 0)
             }
 
             function isPassword(input) {
@@ -201,9 +201,9 @@
                 var anchors = [];
                 var inputs = [];
                 if (passwordForms.length > 0) {//有form的情况:只在forms里找anchor
-                    console.log("password form number: ", passwordForms.length);
                     for (i = 0; i < passwordForms.length; i++) {
                         var form = passwordForms[i].form || passwordForms[i];
+                        console.log("passwordform", form);
                         anchors = anchors.concat(
                             Array.prototype.slice.call(form.querySelectorAll("a[href^='javascript'], a[href^='#']")));
                         buttons = buttons.concat(Array.prototype.slice.call(form.querySelectorAll("button")));

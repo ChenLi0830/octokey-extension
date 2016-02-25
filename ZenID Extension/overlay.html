@@ -24,19 +24,24 @@
             font-size: 18px;
             position: fixed;
             width: 100%;
-            /* left: 50%; */
             text-align: center;
-            /* padding-top: 10%; */
-            /* height: 100%; */
-            /* top: 100px; */
-            /* position: relative !important; */
             top: 50%;
-            /* -webkit-transform: translateY(-50%); */
             -ms-transform: translateY(-50%);
             transform: translateY(60px);
-            /* display: table; */
             vertical-align: middle;
+        }
 
+        p#scriptCancel {
+            color: #B3B3B3;
+            font-size: 14px;
+            font-weight: 200;
+            position: fixed;
+            width: 100%;
+            text-align: center;
+            top: 70%;
+            -ms-transform: translateY(-50%);
+            transform: translateY(60px);
+            vertical-align: middle;
         }
 
         /*<!--html, body, iframe, h2 {-->*/
@@ -62,5 +67,10 @@
 <!--<img id="loader" src="resources/loader2.gif"/>-->
 <img id="loader" src="resources/logo_mono.png"/>
 <p id="loading">安全登录中</p>
+<a href="#">
+    <p id="scriptCancel">取消</p>
+</a>
+
+<script type="text/javascript" src="cancelBtn.js" ></script>
 </body>
 </html>

@@ -11,22 +11,22 @@
     //    "https://login.taobao.com/"
     //];
 
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        switch (request.message) {
+    chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+        switch (message.message) {
             case "new_tab_login":
-                const loginLink = request.loginLink,
-                    username = request.username,
-                    userId = request.userId,
-                    appId = request.appId,
-                    password = request.password,
-                    hexIv = request.hexIv,
-                    hexKey = request.hexKey,
-                    origin = request.origin;
-                //const password = request.password;
+                const loginLink = message.loginLink,
+                    username = message.username,
+                    userId = message.userId,
+                    appId = message.appId,
+                    password = message.password,
+                    hexIv = message.hexIv,
+                    hexKey = message.hexKey,
+                    origin = message.origin;
+                //const password = message.password;
 
                 chrome.tabs.create({"url": loginLink}, function (tab) {
                     tabsOpened[tab.id] =
-                    {"username": username, "url": loginLink, "task": request.message, "overlay": false};
+                    {"username": username, "url": loginLink, "task": message.message, "overlay": false};
 
                     if (password.length === 0) {
                         getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
@@ -38,7 +38,7 @@
                 break;
 
             case "new_tab_register":
-                const registerLink = request.registerLink;
+                const registerLink = message.registerLink;
 
                 chrome.windows.create({
                     url: registerLink,
@@ -55,17 +55,36 @@
 
                     tabsOpened[createdWindow.tabs[0].id] =
                     {
-                        "task": request.message, "windowId": createdWindow.id, "step": 0, "senderTabId": sender.tab.id,
-                        "appId": request.appId, "userProfile": request.profile, "userId": request.userId,
+                        "task": message.message, "windowId": createdWindow.id, "step": 0, "senderTabId": sender.tab.id,
+                        "appId": message.appId, "userProfile": message.profile, "userId": message.userId,
                     };
 
                     //console.log("tabsOpened", tabsOpened);
                     //alert("new window created");
                 });
                 break;
+
             case "close_login_overflow":
                 // remove layout
-                chrome.tabs.executeScript(request.tabId, {file: "passwordObtained.js", runAt: "document_start"});
+                switch (message.status) {
+                    case "reachMaximum":
+                    case "needManualClick":
+                    case "captchaExist":
+                    case "successful":
+                        chrome.tabs.executeScript(sender.tab.id,
+                            {file: "loginOverlayComplete.js", runAt: "document_start"});
+                        break;
+                    case "stopped_by_background":
+                        chrome.tabs.executeScript(sender.tab.id,
+                            {file: "loginOverlayStopped.js", runAt: "document_start"});
+                        break;
+                }
+
+                break;
+
+            case "stop_login":
+                console.log("background script cancel");
+                chrome.tabs.sendMessage(sender.tab.id, {event: "stop_login"});
                 break;
         }
     });
@@ -80,7 +99,7 @@
                     if (!tabsOpened[tabId].overlay) {//If not put overlay yet
                         tabsOpened[tabId].overlay = true;
                         console.log("getting password");
-                        chrome.tabs.executeScript(tabId, {file: "passwordOverlay.js", runAt: "document_start"});
+                        chrome.tabs.executeScript(tabId, {file: "loginOverlay.js", runAt: "document_start"});
                         chrome.tabs.insertCSS(tabId, {file: "overlay.css", runAt: "document_start"});
                     }
 
@@ -128,8 +147,9 @@
     });
 
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+        /* stop login 如果tabUrl is updated(user's already logged in)*/
         if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&
-            changeInfo.url != tabsOpened[tabId].url) {//如果tabUrl is updated(user's already logged in), stop login
+            changeInfo.url != tabsOpened[tabId].url) {
             console.log("tab " + tabId + "'s url is updated to", changeInfo.url, "stop login script for this page");
             delete tabsOpened[tabId];
         }

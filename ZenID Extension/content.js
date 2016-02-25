@@ -21,10 +21,13 @@ window.addEventListener("message", function (event) {
     else if (event.data.event === "register") {
         this.handleRegister(event, origin);
     }
+    //else if (event.data.event === "stop_login") {
+    //    this.handleStopLogin(event, origin);
+    //}
 }, false);
 
 function handleLogin(event, origin) {
-    if (event.data.event == "logIn") {
+    if (event.data.event === "logIn") {
         event.data.message = "new_tab_login";
         event.data.origin = origin;
         chrome.runtime.sendMessage(event.data);
@@ -34,7 +37,7 @@ function handleLogin(event, origin) {
 }
 
 function handleRegister(event, origin) {
-    if (event.data.event == "register") {
+    if (event.data.event === "register") {
         event.data.message = "new_tab_register";
 
         //const registerLink = "https://reg.taobao.com/member/reg/fill_mobile.htm";
@@ -48,6 +51,17 @@ function handleRegister(event, origin) {
         console.log("Invalid call for handleRegister function.")
     }
 }
+
+//function handleStopLogin(event, origin) {
+//    console.log("contentScript cancel");
+//    if (event.data.event === "stop_login") {
+//        event.data.message = "stop_login";
+//        event.data.origin = origin;
+//        chrome.runtime.sendMessage(event.data);
+//    } else {
+//        console.log("Invalid call for handleStopLogin function.")
+//    }
+//}
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type === "registerProgress") {

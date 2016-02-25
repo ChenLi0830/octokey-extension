@@ -55,7 +55,7 @@
             console.log("login start for ", tabsOpened[tabId].url);
             delete tabsOpened[tabId];
 
-            //setTimeout(function () {
+            /*start login script*/
             chrome.tabs.sendMessage(tabId,
                 {event: "new_login_opened", username: username, password: password, tabId: tabId},
                 function (response) {
