@@ -61,7 +61,7 @@
                 /* 开始login */
                 setTimeout(function () {
                     /* 检查captcha */
-                    var potentialCapts = $('*[id*=captcha]:visible');
+                    var potentialCapts = $("*[id*=captcha],[name*='captcha']:visible");
                     var captchasFound = findAndFill(potentialCapts, {name: "captcha"});
 
                     if (captchasFound.length > 0) {
@@ -78,7 +78,7 @@
                         {message: "close_login_overflow", status: "successful"});
                     clearInterval(smartFillInterval);//Stop trying when finds all the elements
 
-                    //loginButtons[0].click();//Todo 判断是否真的登录了,没有的话重复以上步骤但不click
+                    loginButtons[0].click();//Todo 判断是否真的登录了,没有的话重复以上步骤但不click
                     return "login clicked";
                 }, 1000);
             }
