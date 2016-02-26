@@ -69,10 +69,13 @@
                 switch (message.status) {
                     case "reachMaximum":
                     case "needManualClick":
-                    case "captchaExist":
                     case "successful":
                         chrome.tabs.executeScript(sender.tab.id,
                             {file: "loginOverlayComplete.js", runAt: "document_start"});
+                        break;
+                    case "captchaExist":
+                        chrome.tabs.executeScript(sender.tab.id,
+                            {file: "loginOverlayCaptcha.js", runAt: "document_start"});
                         break;
                     case "stopped_by_background":
                         chrome.tabs.executeScript(sender.tab.id,
