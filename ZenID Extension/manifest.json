@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "章鱼钥匙",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "permissions": [
         "webNavigation",
         "webRequest",
