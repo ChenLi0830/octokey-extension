@@ -82,7 +82,6 @@
                             {file: "loginOverlayStopped.js", runAt: "document_start"});
                         break;
                 }
-
                 break;
 
             case "stop_login":
