@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
-    "name": "ZenId extension",
-    "version": "0.1.5",
+    "name": "章鱼钥匙",
+    "version": "0.1.6",
     "permissions": [
         "webNavigation",
         "webRequest",
@@ -25,11 +25,19 @@
         ]
     },
     "browser_action": {
-        "default_icon": "icon.png",
+        "default_icon": {
+            "19": "images/chrome-icon.png",
+            "38": "images/chrome-icon@2x.png"
+        },
         "default_popup": "popup.html"
     },
     "background": {
         "page": "background.html"
+    },
+    "icons": {
+        "16": "images/logo_16.png",
+        "48": "images/logo_48.png",
+        "128": "images/logo_128.png"
     },
     "content_scripts": [
         {
