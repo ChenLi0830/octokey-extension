@@ -1,4 +1,7 @@
 .idea/
 *.zip
-360 Extension/
+*.crx
 *.pem
+360 Extension/
+baidu Extension/
+liebao Extension/
