@@ -2,11 +2,18 @@
     "manifest_version": 2,
     "name": "章鱼钥匙",
     "version": "0.1.7",
+    "description": "Works with Octokey to provide better account management service",
+    "icons": {
+        "16": "images/logo_16.png",
+        "48": "images/logo_48.png",
+        "128": "images/logo_128.png"
+    },    
     "permissions": [
         "webNavigation",
         "webRequest",
         "webRequestBlocking",
         "tabs",
+        "clipboardWrite",
         "https://*/",
         "http://*/"
     ],
@@ -31,14 +38,20 @@
         },
         "default_popup": "popup.html"
     },
+
     "background": {
-        "page": "background.html"
+        "scripts": [
+                "lib/meteor-ddp.js",
+                "lib/jquery-2.2.0.js",
+                "lib/core-min.js",
+                "lib/cipher-core-min.js",
+                "lib/aes-min.js",
+                "scripts/chromereload.js",
+                "scripts/background.js",
+                "scripts/background_methods.js"
+            ]
     },
-    "icons": {
-        "16": "images/logo_16.png",
-        "48": "images/logo_48.png",
-        "128": "images/logo_128.png"
-    },
+    
     "content_scripts": [
         {
             "matches": [
@@ -47,7 +60,7 @@
                 "https://oyaoshi.com/*"
             ],
             "js": [
-                "content.js"
+                "scripts/content.js"
             ],
             "run_at": "document_start",
             "all_frames": true
@@ -57,9 +70,9 @@
                 "<all_urls>"
             ],
             "js": [
-                "credentialFill.js",
+                "scripts/credentialFill.js",
                 "lib/jquery-2.2.0.js",
-                "general.js"
+                "scripts/general.js"
             ],
             "run_at": "document_start",
             "all_frames": true
@@ -69,7 +82,7 @@
                 "https://github.com/*"
             ],
             "js": [
-                "register/github.js"
+                "scripts/register/github.js"
             ],
             "run_at": "document_end"
         },
@@ -78,7 +91,7 @@
                 "https://reg.taobao.com/*"
             ],
             "js": [
-                "register/taobao.js"
+                "scripts/register/taobao.js"
             ],
             "run_at": "document_end"
         },
@@ -87,7 +100,7 @@
                 "https://www.dropbox.com/*"
             ],
             "js": [
-                "register/dropbox.js"
+                "scripts/register/dropbox.js"
             ],
             "run_at": "document_end"
         }
