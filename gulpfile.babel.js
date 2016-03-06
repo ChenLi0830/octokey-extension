@@ -61,6 +61,17 @@ gulp.task('html',  () => {
     .pipe(gulp.dest('dist'));
 });
 
+gulp.task('css',  () => {
+  return gulp.src('app/styles/*.css')
+    // .pipe($.sourcemaps.init())
+    .pipe($.if('*.js', $.uglify()))
+    .pipe($.if('*.css', $.minifyCss({compatibility: '*'})))
+    // .pipe($.sourcemaps.write())
+    .pipe($.useref({searchPath: ['.tmp', 'app', '.']}))
+    .pipe($.if('*.html', $.minifyHtml({conditionals: true, loose: true})))
+    .pipe(gulp.dest('dist/styles'));
+});
+
 gulp.task('chromeManifest', () => {
   return gulp.src('app/manifest.json')
     .pipe($.chromeManifest({
@@ -77,6 +88,22 @@ gulp.task('chromeManifest', () => {
   .pipe($.if('*.js', $.uglify()))
   // .pipe($.if('*.js', $.sourcemaps.write('.')))
   .pipe(gulp.dest('dist'));
+});
+
+gulp.task('executeScript',  () => {
+  return gulp.src(['app/scripts/loginOverlayComplete.js',
+                'app/scripts/loginOverlay.js',
+                'app/scripts/loginOverlayStopped.js',
+                'app/scripts/loginOverlayCaptcha.js',
+                'app/scripts/cancelBtn.js' ],
+            {base: 'app/scripts/'})
+    // .pipe($.sourcemaps.init())
+    .pipe($.if('*.js', $.uglify()))
+    .pipe($.if('*.css', $.minifyCss({compatibility: '*'})))
+    // .pipe($.sourcemaps.write())
+    .pipe($.useref({searchPath: ['.tmp', 'app', '.']}))
+    .pipe($.if('*.html', $.minifyHtml({conditionals: true, loose: true})))
+    .pipe(gulp.dest('dist/scripts'));
 });
 
 gulp.task('babel', () => {
@@ -126,7 +153,7 @@ gulp.task('package', function () {
 gulp.task('build', (cb) => {
   runSequence(
     'lint', 'babel', 'chromeManifest',
-    ['html', 'images', 'extras'],
+    ['html', 'images', 'css', 'executeScript', 'extras'],
     'size', cb);
 });
 

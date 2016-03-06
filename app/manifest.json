@@ -1,13 +1,13 @@
 {
     "manifest_version": 2,
-    "name": "章鱼钥匙",
-    "version": "0.1.7",
+    "name": "O钥匙",
+    "version": "0.1.8",
     "description": "Works with Octokey to provide better account management service",
     "icons": {
         "16": "images/logo_16.png",
         "48": "images/logo_48.png",
         "128": "images/logo_128.png"
-    },    
+    },
     "permissions": [
         "webNavigation",
         "webRequest",
@@ -18,12 +18,11 @@
         "http://*/"
     ],
     "web_accessible_resources": [
-        "resources/loader.gif",
-        "resources/logo_mono.png",
-        "loader2.gif",
         "overlay.html",
+        "overlay_captcha.html",
         "overlay_complete.html"
     ],
+
     "externally_connectable": {
         "matches": [
             "http://localhost:3000/*",
@@ -51,7 +50,7 @@
                 "scripts/background_methods.js"
             ]
     },
-    
+
     "content_scripts": [
         {
             "matches": [
