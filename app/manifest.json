@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "O钥匙",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "description": "Works with Octokey to provide better account management service",
     "icons": {
         "16": "images/logo_16.png",
@@ -34,8 +34,7 @@
         "default_icon": {
             "19": "images/chrome-icon.png",
             "38": "images/chrome-icon@2x.png"
-        },
-        "default_popup": "popup.html"
+        }
     },
 
     "background": {
