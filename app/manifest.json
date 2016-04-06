@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "O钥匙",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "description": "Works with Octokey to provide better account management service",
     "icons": {
         "16": "images/logo_16.png",
@@ -17,9 +17,6 @@
         "https://*/",
         "http://*/"
     ],
-    "chrome_url_overrides": { 
-        "newtab": "redirect.html" 
-    },
     "web_accessible_resources": [
         "overlay.html",
         "overlay_captcha.html",
