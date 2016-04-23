@@ -10,29 +10,34 @@
     //    "http://passport.acfun.tv/login/",
     //    "https://login.taobao.com/"
     //];
-    chrome.browserAction.onClicked.addListener(function(activeTab)
-    {
+    chrome.browserAction.onClicked.addListener(function (activeTab) {
         var newURL = "http://www.oyaoshi.com";
-        chrome.tabs.create({ url: newURL});
+        chrome.tabs.create({url: newURL});
     });
 
 
     chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         switch (message.message) {
             case "new_tab_login":
+                console.log("message", message);
+                console.log("localStorage", localStorage);
                 const loginLink = message.loginLink,
                     username = message.username,
-                    userId = message.userId,
+                    userId = localStorage.userId,
                     appId = message.appId,
                     password = message.password,
-                    hexIv = message.hexIv,
-                    hexKey = message.hexKey,
+                    hexIv = localStorage.hexIv,
+                    hexKey = localStorage.hexKey,
                     origin = message.origin;
-                //const password = message.password;
 
                 chrome.tabs.create({"url": loginLink}, function (tab) {
                     tabsOpened[tab.id] =
-                    {"username": username, "url": loginLink, "task": message.message, "overlay": false};
+                    {
+                        "username": username,
+                        "url": loginLink,
+                        "task": message.message,
+                        "overlay": false
+                    };
 
                     if (password.length === 0) {
                         getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
@@ -46,11 +51,11 @@
             case "new_tab_register":
                 const registerLink = message.registerLink;
 
-                return chrome.windows.getCurrent(null, function(current_window){
+                return chrome.windows.getCurrent(null, function (current_window) {
                     return chrome.windows.create({
                         url: registerLink,
-                        left: current_window.left+10,
-                        top: current_window.top+10,
+                        left: current_window.left + 10,
+                        top: current_window.top + 10,
                         focused: false,
                         height: 1,
                         width: 1,
@@ -62,8 +67,13 @@
 
                         tabsOpened[createdWindow.tabs[0].id] =
                         {
-                            "task": message.message, "windowId": createdWindow.id, "step": 0, "senderTabId": sender.tab.id,
-                            "appId": message.appId, "userProfile": message.profile, "userId": message.userId,
+                            "task": message.message,
+                            "windowId": createdWindow.id,
+                            "step": 0,
+                            "senderTabId": sender.tab.id,
+                            "appId": message.appId,
+                            "userProfile": message.profile,
+                            "userId": localStorage.userId,
                         };
 
                         //console.log("tabsOpened", tabsOpened);
@@ -92,16 +102,36 @@
                         break;
                 }
                 break;
-
             case "stop_login":
                 console.log("background script cancel");
                 chrome.tabs.sendMessage(sender.tab.id, {event: "stop_login"});
+                break;
+            case "store_user_info":
+                //console.log("store_user_info message", message);
+                validateToken(message.userId, message.loginToken, message.origin,
+                    function (error, tokenIsValid) {
+                        if (error) {
+                            console.log("error", error);
+                        }
+                        if (tokenIsValid) {
+                            console.log("user token is valid, and userId matches the token");
+                            localStorage["loginToken"] = message.loginToken;
+                            localStorage["loginTokenExpires"] = message.loginTokenExpires;
+                            localStorage["userId"] = message.userId;
+                            localStorage["hexIv"] = message.hexIv;
+                            localStorage["hexKey"] = message.hexKey;
+                        } else {
+                            console.log("token is invalid");
+                            localStorage.clear();
+                        }
+                    });
                 break;
         }
     });
 
     chrome.webNavigation.onDOMContentLoaded.addListener(function (details) {//对于大部分网站,webNavigation.onDOMContentLoaded来login
-        //chrome.webNavigation.onCompleted.addListener(function (details) {//对于大部分网站,webNavigation.onComplete来login
+        //chrome.webNavigation.onCompleted.addListener(function (details)
+        // {//对于大部分网站,webNavigation.onComplete来login
         const tabId = details.tabId;
         //console.log("tabsOpened", tabsOpened);
         if (tabsOpened[tabId]) {
@@ -110,12 +140,15 @@
                     if (!tabsOpened[tabId].overlay) {//If not put overlay yet
                         tabsOpened[tabId].overlay = true;
                         console.log("getting password");
-                        chrome.tabs.executeScript(tabId, {file: "scripts/loginOverlay.js", runAt: "document_start"});
-                        chrome.tabs.insertCSS(tabId, {file: "styles/overlay.css", runAt: "document_start"});
+                        chrome.tabs.executeScript(tabId,
+                            {file: "scripts/loginOverlay.js", runAt: "document_start"});
+                        chrome.tabs.insertCSS(tabId,
+                            {file: "styles/overlay.css", runAt: "document_start"});
                     }
 
-                    //if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1 || true) {//不包含在iframeSiteList的名单里
-                    //console.log("webNavigation.onCompleted logging in", tabsOpened[tabId].url, tabsOpened[tabId]);
+                    //if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1 || true)
+                    // {//不包含在iframeSiteList的名单里 console.log("webNavigation.onCompleted logging in",
+                    // tabsOpened[tabId].url, tabsOpened[tabId]);
                     tabsOpened[tabId].doneLoadingPage = true;
                     loginIfReady(tabId);
                     //}
@@ -161,7 +194,8 @@
         /* stop login 如果tabUrl is updated(user's already logged in)*/
         if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&
             changeInfo.url != tabsOpened[tabId].url) {
-            console.log("tab " + tabId + "'s url is updated to", changeInfo.url, "stop login script for this page");
+            console.log("tab " + tabId + "'s url is updated to", changeInfo.url,
+                "stop login script for this page");
             delete tabsOpened[tabId];
         }
     });

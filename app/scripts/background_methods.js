@@ -1,7 +1,32 @@
 (function () {
-    window.getPassword = function (username, userId, appId, origin, tabId, hexIv, hexKey) {
+    window.validateToken = function (userId, loginToken, origin, handleLocalStorage) {
         const urlSplit = origin.split("//");
-        console.log("urlSplit",urlSplit);
+        // console.log("urlSplit",urlSplit);
+
+        const DdpUri = (urlSplit[0]==="http:" ? "ws://" : "wss://") + urlSplit[1] + "/websocket";
+
+        //console.log("DdpUri",DdpUri);
+        var ddp = new MeteorDdp(DdpUri);
+
+        ddp.connect().then(function () {
+            //console.log("start login");
+            ddp.call("login", [{ resume: loginToken }])
+                .then(function(userInfo){
+                    handleLocalStorage(null, userInfo.id && userInfo.id === userId);
+                })
+                .fail(function (err) {
+                    console.log('Validating token: there is some error', err);
+                    handleLocalStorage(err, false);
+                });
+        });
+        console.log("reached here");
+    };
+
+    window.getPassword = function (username, userId, appId, origin, tabId, hexIv, hexKey) {
+        //console.log("username, userId, appId, origin, tabId, hexIv, hexKey", username, userId, appId, origin, tabId, hexIv, hexKey);
+
+        const urlSplit = origin.split("//");
+        // console.log("urlSplit",urlSplit);
 
         const DdpUri = (urlSplit[0]==="http:" ? "ws://" : "wss://") + urlSplit[1] + "/websocket";
         
@@ -28,7 +53,7 @@
                     console.log('there is some error', err);
                 });
         });
-    }
+    };
 
     window.decryptAES = function (encryptedPwd, hexIv, hexKey) {
         //hexKey = hexKey+"1";
