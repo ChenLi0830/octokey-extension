@@ -8,7 +8,7 @@ window.onload = function () {
   // Request user info and hexIv from Octokey
   const targetUrl = document.location.origin;
   window.postMessage(//Communicate with web page
-      {type:"extensionRequestInfo"},
+      {type: "extensionRequestInfo"},
       targetUrl
   );
 };
@@ -27,7 +27,7 @@ window.addEventListener("message", function (event) {
     this.handleRegister(event, origin);
   }
   else if (event.data.event === "sendInfoToExtension") {
-      this.handleSendInfoToBackground(event, origin);
+    this.handleSendInfoToBackground(event, origin);
   }
 }, false);
 
@@ -57,7 +57,7 @@ function handleRegister(event, origin) {
   }
 }
 
-function handleSendInfoToBackground(event, origin){
+function handleSendInfoToBackground(event, origin) {
   event.data.origin = origin;
   console.log("event.data", event.data);
   event.data.message = "store_user_info";
