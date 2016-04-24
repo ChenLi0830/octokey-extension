@@ -59,7 +59,7 @@ function handleRegister(event, origin) {
 
 function handleSendInfoToBackground(event, origin) {
   event.data.origin = origin;
-  console.log("event.data", event.data);
+  //console.log("event.data", event.data);
   event.data.message = "store_user_info";
   chrome.runtime.sendMessage(event.data);
 }

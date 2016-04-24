@@ -40,7 +40,7 @@
           .then(function () {
             //console.log("subscribeCollection successful",ddp.getCollection("userAppCredentials"));
             var credentialObj = ddp.getCollection("userAppCredentials");
-            //console.log("credentialObj",credentialObj);
+            console.log("credentialObj",credentialObj);
             const objKey = Object.keys(credentialObj)[0];
             const encryptedPwd = credentialObj[objKey]["publicApps"][0]["password"];
 

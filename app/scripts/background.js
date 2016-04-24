@@ -11,10 +11,16 @@
   //    "https://login.taobao.com/"
   //];
   chrome.browserAction.onClicked.addListener(function (activeTab) {
+
     var newURL = "http://www.oyaoshi.com";
+    console.log("localStorage", localStorage);
+    if (localStorage.length===0){
+      newURL = "http://www.oyaoshi.com";
+    } else {
+      newURL = "https://oyaoshi.com";
+    }
     chrome.tabs.create({url: newURL});
   });
-
 
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     switch (message.message) {
@@ -115,7 +121,7 @@
               }
               if (tokenIsValid) {
                 console.log("user token is valid, and userId matches the token");
-                localStorage["loginToken"] = message.loginToken;
+                //localStorage["loginToken"] = message.loginToken;
                 localStorage["loginTokenExpires"] = message.loginTokenExpires;
                 localStorage["userId"] = message.userId;
                 localStorage["hexIv"] = message.hexIv;
