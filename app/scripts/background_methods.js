@@ -19,7 +19,6 @@
             handleLocalStorage(err, false);
           });
     });
-    console.log("reached here");
   };
 
   window.getPassword = function (username, userId, appId, origin, tabId, hexIv, hexKey) {

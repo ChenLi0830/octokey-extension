@@ -10,6 +10,27 @@
   //    "http://passport.acfun.tv/login/",
   //    "https://login.taobao.com/"
   //];
+  chrome.runtime.onInstalled.addListener(function(details){
+
+
+    console.log("onInstalled triggered - details:", details);
+    //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
+    if (details.reason==="install"){
+      chrome.windows.getAll({populate:true},function(windows){
+        windows.forEach(function(window){
+          window.tabs.forEach(function(tab){
+            if (/oyaoshi/.test(tab.url)){//If the tab url contains 'oyaoshi'
+              console.log("tab", tab);
+              chrome.tabs.reload(tab.id);
+              //tab.
+            }
+          });
+        });
+      });
+    }
+
+  });
+
   chrome.browserAction.onClicked.addListener(function (activeTab) {
 
     var newURL = "http://www.oyaoshi.com";
