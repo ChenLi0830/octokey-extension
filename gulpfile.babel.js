@@ -124,7 +124,8 @@ gulp.task('watch', ['lint', 'babel', 'html'], () => {
     'app/scripts/**/*.js',
     'app/images/**/*',
     'app/styles/**/*',
-    'app/_locales/**/*.json'
+    'app/_locales/**/*.json',
+    'app/*.json'
   ]).on('change', $.livereload.reload);
 
   gulp.watch('app/scripts.babel/**/*.js', ['lint', 'babel']);
