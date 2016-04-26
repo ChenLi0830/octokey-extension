@@ -2,7 +2,7 @@
 var isInstalledNode = document.createElement('div');
 isInstalledNode.id = 'extension-is-installed-nehponjfbiigcobaphdahhhiemfpaeob';
 
-window.onload = function () {
+$(document).ready(function(){
   document.body.appendChild(isInstalledNode);
 
   // Request user info and hexIv from Octokey
@@ -11,7 +11,7 @@ window.onload = function () {
       {type: "extensionRequestInfo"},
       targetUrl
   );
-};
+});
 
 window.addEventListener("message", function (event) {
   var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in

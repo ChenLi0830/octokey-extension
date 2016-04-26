@@ -53,17 +53,6 @@
     "content_scripts": [
         {
             "matches": [
-                "http://localhost:3000/*",
-                "https://oyaoshi.com/*"
-            ],
-            "js": [
-                "scripts/content.js"
-            ],
-            "run_at": "document_start",
-            "all_frames": true
-        },
-        {
-            "matches": [
                 "<all_urls>"
             ],
             "js": [
@@ -74,6 +63,19 @@
             "run_at": "document_start",
             "all_frames": true
         },
+
+        {
+            "matches": [
+                "http://localhost:3000/*",
+                "https://oyaoshi.com/*"
+            ],
+            "js": [
+                "scripts/content.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": true
+        },
+
         {
             "matches": [
                 "https://github.com/*"
