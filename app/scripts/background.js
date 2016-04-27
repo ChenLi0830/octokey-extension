@@ -10,11 +10,10 @@
   //    "http://passport.acfun.tv/login/",
   //    "https://login.taobao.com/"
   //];
+
+  //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
   chrome.runtime.onInstalled.addListener(function(details){
-
-
     console.log("onInstalled triggered - details:", details);
-    //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
     if (details.reason==="install"){
       chrome.windows.getAll({populate:true},function(windows){
         windows.forEach(function(window){
@@ -47,7 +46,7 @@
     switch (message.message) {
       case "new_tab_login":
         console.log("message", message);
-        console.log("localStorage", localStorage);
+        //console.log("localStorage", localStorage);
         const loginLink = message.loginLink,
             username = message.username,
             userId = localStorage.userId,

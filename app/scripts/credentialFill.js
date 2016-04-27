@@ -30,6 +30,15 @@
             return "Reached maximum login trail";
           }
 
+          var loginWithPopup = true;//Todo 设置参数传递进来
+          if (loginWithPopup===true){
+            var result = $('a:contains("登录")');
+            console.log("result", result);
+
+            result[0].click();
+          }
+
+
           var inputs = document.getElementsByTagName("input");    //look for all inputs
 
           /* Fill in necessary information */
