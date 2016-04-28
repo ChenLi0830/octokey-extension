@@ -12,13 +12,13 @@
   //];
 
   //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
-  chrome.runtime.onInstalled.addListener(function(details){
+  chrome.runtime.onInstalled.addListener(function (details) {
     console.log("onInstalled triggered - details:", details);
-    if (details.reason==="install"){
-      chrome.windows.getAll({populate:true},function(windows){
-        windows.forEach(function(window){
-          window.tabs.forEach(function(tab){
-            if (/oyaoshi/.test(tab.url)){//If the tab url contains 'oyaoshi'
+    if (details.reason === "install") {
+      chrome.windows.getAll({populate: true}, function (windows) {
+        windows.forEach(function (window) {
+          window.tabs.forEach(function (tab) {
+            if (/oyaoshi/.test(tab.url)) {//If the tab url contains 'oyaoshi'
               console.log("tab", tab);
               chrome.tabs.reload(tab.id);
               //tab.
@@ -27,14 +27,13 @@
         });
       });
     }
-
   });
 
   chrome.browserAction.onClicked.addListener(function (activeTab) {
 
     var newURL = "http://www.oyaoshi.com";
     console.log("localStorage", localStorage);
-    if (localStorage.length===0){
+    if (localStorage.length === 0) {
       newURL = "http://www.oyaoshi.com";
     } else {
       newURL = "https://oyaoshi.com";
@@ -54,7 +53,18 @@
             password = message.password,
             hexIv = localStorage.hexIv,
             hexKey = localStorage.hexKey,
-            origin = message.origin;
+            origin = message.origin,
+            popUpLogin = message.popUpLogin;
+
+        console.log("popUpLogin", popUpLogin);
+        if (popUpLogin) {
+          chrome.cookies.getAll({url: loginLink}, function (cookies) {
+            for (var i = 0; i < cookies.length; i++) {
+              var cookieName = cookies[i].name;
+              chrome.cookies.remove({url: loginLink, name: cookieName});
+            }
+          });
+        }
 
         chrome.tabs.create({"url": loginLink}, function (tab) {
           tabsOpened[tab.id] =
@@ -62,7 +72,8 @@
             "username": username,
             "url": loginLink,
             "task": message.message,
-            "overlay": false
+            "overlay": false,
+            "popUpLogin": popUpLogin
           };
 
           if (password.length === 0) {
@@ -216,6 +227,8 @@
     }
   });
 
+  // For apps whose login link is not a popup window, If page is redirected (the user is
+  // already logged in), stop logging in
   chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     /* stop login 如果tabUrl is updated(user's already logged in)*/
     if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&

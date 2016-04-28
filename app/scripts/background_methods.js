@@ -81,12 +81,13 @@
     if (tabsOpened[tabId].doneGettingPwd && tabsOpened[tabId].doneLoadingPage) {
       const username = tabsOpened[tabId].username;
       const password = tabsOpened[tabId].password;
+      const popUpLogin = tabsOpened[tabId].popUpLogin;
       console.log("login start for ", tabsOpened[tabId].url);
       delete tabsOpened[tabId];
 
       /*start login script*/
       chrome.tabs.sendMessage(tabId,
-          {event: "new_login_opened", username: username, password: password, tabId: tabId},
+          {event: "new_login_opened", username: username, password: password, popUpLogin: popUpLogin, tabId: tabId},
           function (response) {
             console.log(response);
           });

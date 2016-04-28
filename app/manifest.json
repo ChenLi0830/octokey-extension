@@ -13,6 +13,7 @@
         "webRequest",
         "webRequestBlocking",
         "tabs",
+        "cookies",
         "clipboardWrite",
         "https://*/",
         "http://*/"

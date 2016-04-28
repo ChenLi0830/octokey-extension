@@ -10,7 +10,7 @@
           case "new_login_opened":
             var maxLoginCounter = 10;
             var smartFillInterval = setInterval(
-                smartFillIn.bind(window, message.username, message.password, false, false), 1000);
+                smartFillIn.bind(window, message.username, message.password, message.popUpLogin), 1000);
             break;
 
           case "stop_login":
@@ -20,7 +20,7 @@
             clearInterval(smartFillInterval);//Stop smart filling interval
         }
 
-        function smartFillIn(username, password) {
+        function smartFillIn(username, password, popUpLogin) {
           //console.log("start login trail");
           maxLoginCounter--;
           if (maxLoginCounter === 0) {
@@ -30,8 +30,7 @@
             return "Reached maximum login trail";
           }
 
-          var loginWithPopup = true;//Todo 设置参数传递进来
-          if (loginWithPopup===true){
+          if (popUpLogin===true){
             var result = $('a:contains("登录")');
             console.log("result", result);
 
