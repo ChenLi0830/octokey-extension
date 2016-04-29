@@ -3,14 +3,29 @@
  */
 
 (function () {
+  //定义caseInsensitive 的 contains 函数
+  //$.expr[":"].icontains = $.expr.createPseudo(function(arg) {
+  //  return function( elem ) {
+  //    return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+  //  };
+  //});
+
   chrome.runtime.onMessage.addListener(
       function (message, sender, sendResponse) {
+
+        $.expr[":"].icontains = $.expr.createPseudo(function(arg) {
+          return function( elem ) {
+            return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+          };
+        });
 
         switch (message.event) {
           case "new_login_opened":
             var maxLoginCounter = 10;
             var smartFillInterval = setInterval(
-                smartFillIn.bind(window, message.username, message.password, message.popUpLogin), 1000);
+                smartFillIn.bind(window, message.username, message.password, message.popUpLogin,
+                    message.url),
+                1000);
             break;
 
           case "stop_login":
@@ -20,7 +35,7 @@
             clearInterval(smartFillInterval);//Stop smart filling interval
         }
 
-        function smartFillIn(username, password, popUpLogin) {
+        function smartFillIn(username, password, popUpLogin, loginUrl) {
           //console.log("start login trail");
           maxLoginCounter--;
           if (maxLoginCounter === 0) {
@@ -30,13 +45,10 @@
             return "Reached maximum login trail";
           }
 
-          if (popUpLogin===true){
-            var result = $('a:contains("登录")');
-            console.log("result", result);
-
-            result[0].click();
+          if (popUpLogin === true) {
+            findPopUpButton(loginUrl);
+            //return;
           }
-
 
           var inputs = document.getElementsByTagName("input");    //look for all inputs
 
@@ -69,7 +81,9 @@
           /* 开始login */
           setTimeout(function () {
             /* 检查captcha */
-            var potentialCapts = $("*[id*=captcha],[name*='captcha']:visible");
+            var potentialCapts = $(
+                "*[id*='captcha']:visible,[id*='verifyCode']:visible,[name*='captcha']:visible,[name*='verifyCode']:visible,[placeholder*='验证码']:visible"
+            );
             var captchasFound = findAndFill(potentialCapts, {name: "captcha"});
 
             if (captchasFound.length > 0) {
@@ -139,6 +153,7 @@
 
           if (targetEl.name === "username" && targetEl.value && !elIsFound) {//If username needs to be filled,
             // try brute force
+            console.log("brute force search for username");
             elIsFound = bruteForceFillUsername(targetEl.value);
           }
 
@@ -170,8 +185,10 @@
         }
 
         function isUsername(input) {
-          return ((input.type == "text" || input.type == "email" ) &&
-              (input.name.toLowerCase().indexOf("login") != -1 ||
+          return (
+              (input.type == "text" || input.type == "email") && (
+                //包含下面中的一个
+                  input.name.toLowerCase().indexOf("login") != -1 ||
                   input.name.toLowerCase().indexOf("user") != -1 ||
                   input.name.toLowerCase().indexOf("username") != -1 ||
                   input.name.toLowerCase().indexOf("email") != -1 ||
@@ -186,6 +203,15 @@
                   (input.placeholder && input.placeholder.indexOf("用户名") != -1) ||
                   (input.innerHTML.indexOf("邮箱") != -1 || input.innerHTML.indexOf("帐号") != -1 ||
                   input.innerHTML.indexOf("用户名") != -1)
+              ) && (//不是验证码和密码
+                  input.name.toLowerCase().indexOf("verifycode") === -1 &&
+                  input.name.toLowerCase().indexOf("verification") === -1 &&
+                  input.name.toLowerCase().indexOf("pwd") === -1 &&
+                  input.name.toLowerCase().indexOf("password") === -1 &&
+                  input.id.toLowerCase().indexOf("verifycode") === -1 &&
+                  input.id.toLowerCase().indexOf("verification") === -1 &&
+                  input.id.toLowerCase().indexOf("pwd") === -1 &&
+                  input.id.toLowerCase().indexOf("password") === -1
               )
           )
         }
@@ -194,12 +220,16 @@
           //if (element.type && element.type === "submit")
           //    return true;
           return element.innerHTML.replace(/\s|&nbsp;/g, "") === "登录" ||
+              element.innerHTML.replace(/\s|&nbsp;/g, "") === "立即登录" ||
               element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">登录<") != -1 ||
+              element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">立即登录<") != -1 ||
               element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
               element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
               (element.value && element.value.toLowerCase().indexOf("sign in") != -1) ||
               (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
               (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("登录")) ||
+              (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("立即登录")) ||
+              (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("立即登录")) ||
               (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录"))
         }
 
@@ -272,6 +302,46 @@
             }
           }
           return filledUsername;
+        }
+
+        //获得popUpBtns之后,找到对应的popUpBtn并点击
+        function clickPopUpButton(popUpBtnsFound) {
+          if (popUpBtnsFound.length === 0) {
+            return false;
+          }
+          if (popUpBtnsFound.length === 1) {
+            console.log("pop up button found.", popUpBtnsFound, " Clicking");
+            //("pop up button found. Clicking");
+            popUpBtnsFound[0].click();
+            return true;
+          }
+          if (popUpBtnsFound.length > 1) {
+            console.log("more than 1 pop up button found. ", popUpBtnsFound, "first is clicked");
+            popUpBtnsFound[0].click();
+            return true;
+          }
+        }
+
+        function findPopUpButton(loginUrl) {
+          var popUpBtnsFound = $(
+              'a:contains("账户登录"):visible, a:contains("账号登录"):visible, a:contains("帐户登录"):visible, a:contains("帐号登录"):visible')
+              .filter(function (index) {
+                //baseURI可以筛选第三方登录方式, length可以进行进一步filter
+                return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 8;
+                //return $(this).text().length<=4
+              });
+
+          var result = clickPopUpButton(popUpBtnsFound);
+          if (!result) {//如果用“账户登录”没有找到popUpButton,就用“登录”找
+            var popUpBtnsFound2 = $('a:contains("登录"):visible, a:icontains("sign in"):visible, a:icontains("log in"):visible').filter(function (index) {
+              //baseURI可以筛选第三方登录方式, length可以进行进一步filter
+              return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 4;
+            });
+            var result2 = clickPopUpButton(popUpBtnsFound2);
+            if (!result2) {
+              console.log("Can't find popUp login Btn");
+            }
+          }
         }
       });
 
