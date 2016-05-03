@@ -1,15 +1,16 @@
 (function () {
   window.tabsOpened = {};
   var authTabs = [];
-  //var iframeSiteList = [
-  //    "https://login.tmall.com/",
-  //    "http://i.xunlei.com/login.html",
-  //    "https://pan.baidu.com/",
-  //    "https://passport.baidu.com/v2/?login",
-  //    "http://www.nuomi.com/pclogin/main/loginpage",
-  //    "http://passport.acfun.tv/login/",
-  //    "https://login.taobao.com/"
-  //];
+  var iframeSiteList = [
+    "https://login.tmall.com/?redirectURL=tmall.com",
+    "http://www.qq.com/",
+    //"http://i.xunlei.com/login.html",
+    //"https://pan.baidu.com/",
+    //"https://passport.baidu.com/v2/?login",
+    //"http://www.nuomi.com/pclogin/main/loginpage",
+    //"http://passport.acfun.tv/login/",
+    //"https://login.taobao.com/"
+  ];
 
   //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
   chrome.runtime.onInstalled.addListener(function (details) {
@@ -57,7 +58,7 @@
             popUpLogin = message.popUpLogin;
 
         console.log("popUpLogin", popUpLogin);
-        if (popUpLogin) {
+        if (popUpLogin) {//如果是popUp login,删除该网站的所有cookie,保证一定需要login
           chrome.cookies.getAll({url: loginLink}, function (cookies) {
             for (var i = 0; i < cookies.length; i++) {
               var cookieName = cookies[i].name;
@@ -66,7 +67,7 @@
           });
         }
 
-        chrome.tabs.create({"url": loginLink}, function (tab) {
+        chrome.tabs.create({"url": loginLink}, function (tab) {//建立新tab,打开loginLink
           tabsOpened[tab.id] =
           {
             "username": username,
@@ -163,6 +164,16 @@
               }
             });
         break;
+      case "new_tab_home":
+        console.log("message", message);
+        const homepageLink = message.homepageLink;
+/*            appId = message.appId,
+            origin = message.origin;*/
+
+        chrome.tabs.create({"url": homepageLink}, function (tab) {//建立新tab,打开loginLink
+          console.log("visit homepage", homepageLink, " in tab ", tab);
+        });
+        break;
     }
   });
 
@@ -174,21 +185,25 @@
     if (tabsOpened[tabId]) {
       switch (tabsOpened[tabId].task) {
         case "new_tab_login":
-          if (!tabsOpened[tabId].overlay) {//If not put overlay yet
+
+          // Add overlay if not added yet
+          if (!tabsOpened[tabId].overlay) {
             tabsOpened[tabId].overlay = true;
-            console.log("getting password");
+            //console.log("getting password");
             chrome.tabs.executeScript(tabId,
                 {file: "scripts/loginOverlay.js", runAt: "document_start"});
             chrome.tabs.insertCSS(tabId,
                 {file: "styles/overlay.css", runAt: "document_start"});
           }
 
-          //if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1 || true)
-          // {//不包含在iframeSiteList的名单里 console.log("webNavigation.onCompleted logging in",
-          // tabsOpened[tabId].url, tabsOpened[tabId]);
-          tabsOpened[tabId].doneLoadingPage = true;
-          loginIfReady(tabId);
-          //}
+          if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
+            console.log("webNavigation.onDOMContentLoaded logging in", tabsOpened[tabId].url,
+                tabsOpened[tabId]);
+
+            tabsOpened[tabId].doneLoadingPage = true;
+            //setTimeout(loginIfReady.bind(this, tabId), 5000);
+            loginIfReady(tabId);
+          }
           break;
         case "new_tab_register":
           if (tabsOpened[tabId].lastStep >= tabsOpened[tabId].step) return;
@@ -227,15 +242,30 @@
     }
   });
 
-  // For apps whose login link is not a popup window, If page is redirected (the user is
-  // already logged in), stop logging in
   chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    /* stop login 如果tabUrl is updated(user's already logged in)*/
+    //console.log("updated, changeInfo", changeInfo);
+
+    // Stop login 如果tabUrl is updated(user's already logged in)
     if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&
         changeInfo.url != tabsOpened[tabId].url) {
       console.log("tab " + tabId + "'s url is updated to", changeInfo.url,
           "stop login script for this page");
       delete tabsOpened[tabId];
+      return;
+    }
+
+    //对于有iframe的应用, 需要等到 status === "complete" 才能开始登录
+    if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" &&
+        changeInfo.status === "complete") {
+
+      if ($.inArray(tabsOpened[tabId].url, iframeSiteList) > -1) {//包含在 iframeSiteList的名单里
+        console.log("tabs.onUpdated complete logging in", tabsOpened[tabId].url,
+            tabsOpened[tabId]);
+
+        tabsOpened[tabId].doneLoadingPage = true;
+        //setTimeout(loginIfReady.bind(this, tabId), 5000);
+        loginIfReady(tabId);
+      }
     }
   });
 

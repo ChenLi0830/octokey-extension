@@ -57,7 +57,6 @@
                 "<all_urls>"
             ],
             "js": [
-                "scripts/credentialFill.js",
                 "lib/jquery-2.2.0.js",
                 "scripts/general.js"
             ],
@@ -72,6 +71,17 @@
             ],
             "js": [
                 "scripts/content.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": true
+        },
+
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "scripts/credentialFill.js"
             ],
             "run_at": "document_start",
             "all_frames": true

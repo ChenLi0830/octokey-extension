@@ -19,6 +19,9 @@
           };
         });
 
+        console.log("credentialFill start");
+        //alert("credentialFill start");
+
         switch (message.event) {
           case "new_login_opened":
             var maxLoginCounter = 10;
@@ -230,7 +233,8 @@
               (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("登录")) ||
               (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("立即登录")) ||
               (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("立即登录")) ||
-              (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录"))
+              (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录")) ||
+              (element.className && element.className.toLowerCase() === "smb_btn")
         }
 
         function isCaptcha(element) {
@@ -338,8 +342,15 @@
               return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 4;
             });
             var result2 = clickPopUpButton(popUpBtnsFound2);
-            if (!result2) {
-              console.log("Can't find popUp login Btn");
+            if (!result2) {//查找特殊的登录btn（用图片写‘登录’的）
+              var popUpBtnsFound3 = $('a.login').filter(function (index) {
+                //baseURI可以筛选第三方登录方式, length可以进行进一步filter
+                return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 4;
+              });
+              var result3 = clickPopUpButton(popUpBtnsFound3);
+              if (!result3) {
+                console.log("Can't find popUp login Btn");
+              }
             }
           }
         }

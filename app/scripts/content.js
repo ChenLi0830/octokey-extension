@@ -29,6 +29,9 @@ window.addEventListener("message", function (event) {
   else if (event.data.event === "sendInfoToExtension") {
     this.handleSendInfoToBackground(event, origin);
   }
+  else if (event.data.event === "visitHomepage"){
+    this.handleVisitHome(event, origin);
+  }
 }, false);
 
 function handleLogin(event, origin) {
@@ -61,6 +64,13 @@ function handleSendInfoToBackground(event, origin) {
   event.data.origin = origin;
   //console.log("event.data", event.data);
   event.data.message = "store_user_info";
+  chrome.runtime.sendMessage(event.data);
+}
+
+function handleVisitHome(event, origin) {
+  event.data.origin = origin;
+  //console.log("event.data", event.data);
+  event.data.message = "new_tab_home";
   chrome.runtime.sendMessage(event.data);
 }
 
