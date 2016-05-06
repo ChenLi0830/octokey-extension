@@ -1,9 +1,14 @@
 (function () {
   window.tabsOpened = {};
   var authTabs = [];
+  //Todo - move this to database, more specifically, add a record in each app's document.
   var iframeSiteList = [
     "https://login.tmall.com/?redirectURL=tmall.com",
     "http://www.qq.com/",
+    "http://login.163.com/",
+    "https://account.aliyun.com/login/login.htm",
+    "http://webmail30.189.cn/w2/",
+    "https://www.icloud.com/#mail",
     //"http://i.xunlei.com/login.html",
     //"https://pan.baidu.com/",
     //"https://passport.baidu.com/v2/?login",
@@ -15,7 +20,7 @@
   //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
   chrome.runtime.onInstalled.addListener(function (details) {
     console.log("onInstalled triggered - details:", details);
-    if (details.reason === "install") {
+    if (details.reason === "install" || details.reason === "update") {
       chrome.windows.getAll({populate: true}, function (windows) {
         windows.forEach(function (window) {
           window.tabs.forEach(function (tab) {
@@ -80,6 +85,8 @@
           if (password.length === 0) {
             getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
           } else {
+            //const decryptedPassword = decryptAES(password, hexIv, hexKey);
+            //console.log("password is passed in directly, ", decryptedPassword);
             tabsOpened[tab.id].password = password;
             tabsOpened[tab.id].doneGettingPwd = true;
           }
@@ -167,8 +174,8 @@
       case "new_tab_home":
         console.log("message", message);
         const homepageLink = message.homepageLink;
-/*            appId = message.appId,
-            origin = message.origin;*/
+        /*            appId = message.appId,
+         origin = message.origin;*/
 
         chrome.tabs.create({"url": homepageLink}, function (tab) {//建立新tab,打开loginLink
           console.log("visit homepage", homepageLink, " in tab ", tab);
@@ -246,12 +253,17 @@
     //console.log("updated, changeInfo", changeInfo);
 
     // Stop login 如果tabUrl is updated(user's already logged in)
-    if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url &&
-        changeInfo.url != tabsOpened[tabId].url) {
-      console.log("tab " + tabId + "'s url is updated to", changeInfo.url,
-          "stop login script for this page");
-      delete tabsOpened[tabId];
-      return;
+    if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url) {
+      //如果跳转链接和登录链接互不包含,则算url改变,而比如www.abc.com变成www.abc.com?uId=123, 不算改url
+      const urlChanged = changeInfo.url.indexOf(tabsOpened[tabId].url) === -1 &&
+          tabsOpened[tabId].url.indexOf(changeInfo.url) === -1;
+      if (urlChanged) {
+        console.log("tab " + tabId + "'s url is updated from ", tabsOpened[tabId].url, " to ",
+            changeInfo.url,
+            "stop login script for this page");
+        delete tabsOpened[tabId];
+        return;
+      }
     }
 
     //对于有iframe的应用, 需要等到 status === "complete" 才能开始登录

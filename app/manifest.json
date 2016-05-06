@@ -1,8 +1,10 @@
 {
     "manifest_version": 2,
-    "name": "O钥匙",
-    "version": "0.1.12",
-    "description": "Works with Octokey to provide better account management service",
+    "name": "Octokey",
+    "version": "0.1.15",
+    "description": "Works with Octokey - O钥匙 to provide better account management service",
+    "update_url": "http://upext.chrome.360.cn/intf.php?method=ExtUpdate.query", 
+    "update_url": "http://clients2.google.com/service/update2/crx",
     "icons": {
         "16": "images/logo_16.png",
         "48": "images/logo_48.png",

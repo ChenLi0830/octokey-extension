@@ -13,8 +13,8 @@
   chrome.runtime.onMessage.addListener(
       function (message, sender, sendResponse) {
 
-        $.expr[":"].icontains = $.expr.createPseudo(function(arg) {
-          return function( elem ) {
+        $.expr[":"].icontains = $.expr.createPseudo(function (arg) {
+          return function (elem) {
             return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
           };
         });
@@ -24,7 +24,13 @@
 
         switch (message.event) {
           case "new_login_opened":
-            var maxLoginCounter = 10;
+
+            /*//如果需要点击登录按钮,就先点登录按钮
+             if (message.popUpLogin === true) {
+             findPopUpButton(message.url);
+             }*/
+
+            var maxLoginCounter = 3;
             var smartFillInterval = setInterval(
                 smartFillIn.bind(window, message.username, message.password, message.popUpLogin,
                     message.url),
@@ -48,9 +54,9 @@
             return "Reached maximum login trail";
           }
 
+          //如果需要点击登录按钮,就先点登录按钮
           if (popUpLogin === true) {
             findPopUpButton(loginUrl);
-            //return;
           }
 
           var inputs = document.getElementsByTagName("input");    //look for all inputs
@@ -85,8 +91,9 @@
           setTimeout(function () {
             /* 检查captcha */
             var potentialCapts = $(
-                "*[id*='captcha']:visible,[id*='verifyCode']:visible,[name*='captcha']:visible,[name*='verifyCode']:visible,[placeholder*='验证码']:visible"
+                "*[id*='captcha']:visible,[id*='verifyCode']:visible,[name*='captcha']:visible,[name*='verifyCode']:visible,[placeholder*='验证码']:visible, [placeholder*='拼图']:visible, [placeholder*='滑块']:visible, [name*='securityCode']:visible, [id*='securityCode']:visible"
             );
+            console.log("potentialCapts", potentialCapts);
             var captchasFound = findAndFill(potentialCapts, {name: "captcha"});
 
             if (captchasFound.length > 0) {
@@ -181,6 +188,7 @@
         }
 
         function isPassword(input) {
+          //if (input.type == "password"){alert("input.type==password!")}
           //if ((input.type == "password" && (input.name.toLowerCase().indexOf("auth") == -1)) ||
           //  input.name.toLowerCase() =="loginform:password")
           //console.log("check for password");
@@ -191,11 +199,13 @@
           return (
               (input.type == "text" || input.type == "email") && (
                 //包含下面中的一个
+                  input.name.toLowerCase().indexOf("mail") != -1 ||
                   input.name.toLowerCase().indexOf("login") != -1 ||
                   input.name.toLowerCase().indexOf("user") != -1 ||
                   input.name.toLowerCase().indexOf("username") != -1 ||
                   input.name.toLowerCase().indexOf("email") != -1 ||
                   input.name.toLowerCase().indexOf("passport") != -1 ||
+                  input.id.toLowerCase().indexOf("mail") != -1 ||
                   input.id.toLowerCase().indexOf("login") != -1 ||
                   input.id.toLowerCase().indexOf("user") != -1 ||
                   input.id.toLowerCase().indexOf("username") != -1 ||
@@ -211,10 +221,12 @@
                   input.name.toLowerCase().indexOf("verification") === -1 &&
                   input.name.toLowerCase().indexOf("pwd") === -1 &&
                   input.name.toLowerCase().indexOf("password") === -1 &&
+                  input.name.toLowerCase().indexOf("validcode") === -1 &&
                   input.id.toLowerCase().indexOf("verifycode") === -1 &&
                   input.id.toLowerCase().indexOf("verification") === -1 &&
                   input.id.toLowerCase().indexOf("pwd") === -1 &&
-                  input.id.toLowerCase().indexOf("password") === -1
+                  input.id.toLowerCase().indexOf("password") === -1 &&
+                  input.id.toLowerCase().indexOf("validcode") === -1
               )
           )
         }
@@ -222,19 +234,27 @@
         function isLoginElement(element) {
           //if (element.type && element.type === "submit")
           //    return true;
-          return element.innerHTML.replace(/\s|&nbsp;/g, "") === "登录" ||
-              element.innerHTML.replace(/\s|&nbsp;/g, "") === "立即登录" ||
-              element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">登录<") != -1 ||
-              element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">立即登录<") != -1 ||
-              element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
-              element.innerHTML.toLowerCase().indexOf("log in") != -1 ||
+          const innerText = $(element).text().replace(/\s|&nbsp;/g, "").toLowerCase();
+
+          //console.log("innerText", innerText, element);
+          return innerText === "登录" || innerText === "立即登录" ||
+              innerText.indexOf(">登录<") != -1 || innerText.indexOf(">立即登录<") != -1 ||
+              innerText.indexOf("signin") != -1 || innerText.indexOf("login") != -1 ||
+
+                /*element.innerHTML.replace(/\s|&nbsp;/g, "") === "登录" ||
+                 element.innerHTML.replace(/\s|&nbsp;/g, "") === "立即登录" ||
+                 element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">登录<") != -1 ||
+                 element.innerHTML.replace(/\s|&nbsp;/g, "").indexOf(">立即登录<") != -1 ||
+                 element.innerHTML.toLowerCase().indexOf("sign in") != -1 ||
+                 element.innerHTML.toLowerCase().indexOf("log in") != -1 ||*/
               (element.value && element.value.toLowerCase().indexOf("sign in") != -1) ||
               (element.value && element.value.toLowerCase().indexOf("log in") != -1) ||
               (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("登录")) ||
               (element.value && element.value.toLowerCase().replace(/\s/g, "") === ("立即登录")) ||
               (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("立即登录")) ||
               (element.placeholder && element.placeholder.replace(/\s|&nbsp;/g, "") === ("登录")) ||
-              (element.className && element.className.toLowerCase() === "smb_btn")
+              (element.className && element.className.toLowerCase() === "smb_btn") ||
+              (element.title && element.title.replace(/\s|&nbsp;/g, "") === "登录")
         }
 
         function isCaptcha(element) {
@@ -252,7 +272,8 @@
               console.log("passwordform", form);
               anchors = anchors.concat(
                   Array.prototype.slice.call(
-                      form.querySelectorAll("a[href^='javascript'], a[href^='#']")));
+                      form.querySelectorAll(
+                          "a[href^='javascript'], a[href^='#'], a[href^='null']")));
               buttons = buttons.concat(Array.prototype.slice.call(form.querySelectorAll("button")));
               inputs = inputs.concat(Array.prototype.slice.call(form.querySelectorAll("input")));
             }
@@ -261,7 +282,8 @@
             console.log("0 password form");
             console.log("searching for anchors and buttons from the entire page");
             anchors =
-                document.querySelectorAll("a[href^='javascript'], a[href^='#'], a:not([href])");
+                document.querySelectorAll("a[href^='javascript'], a[href^='#'], a:not([href])," +
+                    " a[href^='null']");
             buttons = document.querySelectorAll("button");
             inputs = document.querySelectorAll("input");
           }
@@ -310,6 +332,7 @@
 
         //获得popUpBtns之后,找到对应的popUpBtn并点击
         function clickPopUpButton(popUpBtnsFound) {
+          console.log("popUpBtnsFound[0]", popUpBtnsFound[0]);
           if (popUpBtnsFound.length === 0) {
             return false;
           }
@@ -337,10 +360,18 @@
 
           var result = clickPopUpButton(popUpBtnsFound);
           if (!result) {//如果用“账户登录”没有找到popUpButton,就用“登录”找
-            var popUpBtnsFound2 = $('a:contains("登录"):visible, a:icontains("sign in"):visible, a:icontains("log in"):visible').filter(function (index) {
-              //baseURI可以筛选第三方登录方式, length可以进行进一步filter
-              return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 4;
-            });
+            /*var popUpBtnsFound2 = $('a:contains("登录"):visible, a:contains("登 录"):visible').filter(function (index) {
+             //baseURI可以筛选第三方登录方式, length可以进行进一步filter
+             return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 4;
+             });*/
+            var popUpBtnsFound2 = $('a:contains("登录"):visible, a:contains("登 录"):visible')
+                .filter(function (index) {
+                  //baseURI可以筛选第三方登录方式, length可以进行进一步filter
+                  const loginFromOrigin = $(this)[0].baseURI.indexOf(loginUrl) > -1 ||
+                      loginUrl($(this)[0].baseURI.indexOf) > -1;
+                  return loginFromOrigin && $(this).text().trim().length < 4;
+                });
+            console.log("popUpBtnsFound2", popUpBtnsFound2);
             var result2 = clickPopUpButton(popUpBtnsFound2);
             if (!result2) {//查找特殊的登录btn（用图片写‘登录’的）
               var popUpBtnsFound3 = $('a.login').filter(function (index) {
