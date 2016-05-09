@@ -267,7 +267,7 @@
           var anchors = [];
           var inputs = [];
           var divs = $(
-              ':contains("Login"):not(:has(*)), :contains("login"):not(:has(*)), :contains("登"):contains("录"):not(:has(*))');
+              ':contains("Login"):not(:has(*)):visible, :contains("login"):not(:has(*)):visible, :contains("登"):contains("录"):not(:has(*)):visible');
           if (passwordForms.length > 0) {//有form的情况:只在forms里找anchor
             for (i = 0; i < passwordForms.length; i++) {
               var form = passwordForms[i].form || passwordForms[i];
