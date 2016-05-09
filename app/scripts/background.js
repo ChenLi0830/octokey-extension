@@ -37,11 +37,13 @@
 
   chrome.browserAction.onClicked.addListener(function (activeTab) {
 
-    var newURL = "http://www.oyaoshi.com";
+    var newURL = "https://oyaoshi.com";
     console.log("localStorage", localStorage);
     if (localStorage.length === 0) {
-      newURL = "http://www.oyaoshi.com";
+      //之前从没有用过Octokey
+      newURL = "https://oyaoshi.com";
     } else {
+      //之前用过Octokey
       newURL = "https://oyaoshi.com";
     }
     chrome.tabs.create({url: newURL});
@@ -50,7 +52,7 @@
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     switch (message.message) {
       case "new_tab_login":
-        console.log("message", message);
+        //console.log("message", message);
         //console.log("localStorage", localStorage);
         const loginLink = message.loginLink,
             username = message.username,
@@ -205,7 +207,7 @@
 
           if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
             console.log("webNavigation.onDOMContentLoaded logging in", tabsOpened[tabId].url,
-                tabsOpened[tabId]);
+                tabsOpened[tabId].username, "popUpLogin", tabsOpened[tabId].popUpLogin);
 
             tabsOpened[tabId].doneLoadingPage = true;
             //setTimeout(loginIfReady.bind(this, tabId), 5000);

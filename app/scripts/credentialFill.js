@@ -25,11 +25,6 @@
         switch (message.event) {
           case "new_login_opened":
 
-            /*//如果需要点击登录按钮,就先点登录按钮
-             if (message.popUpLogin === true) {
-             findPopUpButton(message.url);
-             }*/
-
             var maxLoginCounter = 3;
             var smartFillInterval = setInterval(
                 smartFillIn.bind(window, message.username, message.password, message.popUpLogin,
@@ -68,7 +63,12 @@
           var passwordForms = passResult.passwordForms;
 
           var loginButtons = getLoginButtons(passwordForms);
+          if (loginButtons.length > 0) {
+            loginButtons = [filterLoginBtns(loginButtons)];
+            console.log("loginButtons", loginButtons);
+          }
 
+          console.log("loginButtons", loginButtons);
           //validate if login can be processed
           if (!filledUsername || !filledPassword) {
             console.log("filledUsername", filledUsername, "filledPassword", filledPassword);
@@ -266,6 +266,8 @@
           var buttons = [];
           var anchors = [];
           var inputs = [];
+          var divs = $(
+              ':contains("Login"):not(:has(*)), :contains("login"):not(:has(*)), :contains("登"):contains("录"):not(:has(*))');
           if (passwordForms.length > 0) {//有form的情况:只在forms里找anchor
             for (i = 0; i < passwordForms.length; i++) {
               var form = passwordForms[i].form || passwordForms[i];
@@ -299,6 +301,10 @@
           if (anchors.length > 0) {
             //console.log("elements.concat anchors");
             elements = elements.concat(Array.prototype.slice.call(anchors));
+          }
+          if (divs.length > 0) {
+            console.log("elements.concat divs", divs);
+            elements = elements.concat(Array.prototype.slice.call(divs));
           }
 
           console.log("all candidate elements", elements);
@@ -354,7 +360,18 @@
               'a:contains("账户登录"):visible, a:contains("账号登录"):visible, a:contains("帐户登录"):visible, a:contains("帐号登录"):visible')
               .filter(function (index) {
                 //baseURI可以筛选第三方登录方式, length可以进行进一步filter
-                return $(this)[0].baseURI === loginUrl && $(this).text().trim().length < 8;
+                const sameOrigin = $(this)[0].baseURI === loginUrl;
+                const notTooLong = $(this).text().trim().length < 8;
+                const thirdPartyStrings = ["微信", "微博", "qq", "百度", "acfun", "bilibili", "优酷"];
+                //非第三方登录flag
+                var notThirdParty = true;
+                //console.log("thirdPartyStrings", thirdPartyStrings);
+                thirdPartyStrings.map(function(thirdPartyString){
+                  if ($(this).text().toLowerCase().indexOf(thirdPartyString)!=-1){
+                    notThirdParty = false;
+                  }
+                }.bind(this));
+                return sameOrigin && notTooLong && notThirdParty;
                 //return $(this).text().length<=4
               });
 
@@ -384,6 +401,20 @@
               }
             }
           }
+        }
+
+        function filterLoginBtns(loginElements) {
+          //如果超过一个登录btn,找长度最短的
+          var textLength = 999,
+              loginElement;
+
+          loginElements.map(function (element) {
+            var targetLength = $(element).text().replace(/\s|&nbsp;/g, "").length;
+            if (targetLength < textLength) {
+              loginElement = element;
+            }
+          });
+          return loginElement;
         }
       });
 
