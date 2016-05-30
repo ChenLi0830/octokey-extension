@@ -64,15 +64,15 @@
             origin = message.origin,
             popUpLogin = message.popUpLogin;
 
-        console.log("popUpLogin", popUpLogin);
-        if (popUpLogin) {//如果是popUp login,删除该网站的所有cookie,保证一定需要login
-          chrome.cookies.getAll({url: loginLink}, function (cookies) {
-            for (var i = 0; i < cookies.length; i++) {
-              var cookieName = cookies[i].name;
-              chrome.cookies.remove({url: loginLink, name: cookieName});
-            }
-          });
-        }
+        //console.log("popUpLogin", popUpLogin);
+        //if (popUpLogin) {//如果是popUp login,删除该网站的所有cookie,保证一定需要login
+        chrome.cookies.getAll({url: loginLink}, function (cookies) {
+          for (var i = 0; i < cookies.length; i++) {
+            var cookieName = cookies[i].name;
+            chrome.cookies.remove({url: loginLink, name: cookieName});
+          }
+        });
+        //}
 
         chrome.tabs.create({"url": loginLink}, function (tab) {//建立新tab,打开loginLink
           tabsOpened[tab.id] =
@@ -85,7 +85,8 @@
           };
 
           if (password.length === 0) {
-            getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
+            console.log("Haven't get password from webapp!");
+            //getPassword(username, userId, appId, origin, tab.id, hexIv, hexKey);
           } else {
             //const decryptedPassword = decryptAES(password, hexIv, hexKey);
             //console.log("password is passed in directly, ", decryptedPassword);
@@ -153,26 +154,27 @@
         console.log("background script cancel");
         chrome.tabs.sendMessage(sender.tab.id, {event: "stop_login"});
         break;
-      case "store_user_info":
-        //console.log("store_user_info message", message);
-        validateToken(message.userId, message.loginToken, message.origin,
-            function (error, tokenIsValid) {
-              if (error) {
-                console.log("error", error);
-              }
-              if (tokenIsValid) {
-                console.log("user token is valid, and userId matches the token");
-                //localStorage["loginToken"] = message.loginToken;
-                localStorage["loginTokenExpires"] = message.loginTokenExpires;
-                localStorage["userId"] = message.userId;
-                localStorage["hexIv"] = message.hexIv;
-                localStorage["hexKey"] = message.hexKey;
-              } else {
-                console.log("token is invalid");
-                localStorage.clear();
-              }
-            });
-        break;
+      //停止用plugin登录
+      /*      case "store_user_info":
+       //console.log("store_user_info message", message);
+       validateToken(message.userId, message.loginToken, message.origin,
+       function (error, tokenIsValid) {
+       if (error) {
+       console.log("error", error);
+       }
+       if (tokenIsValid) {
+       console.log("user token is valid, and userId matches the token");
+       //localStorage["loginToken"] = message.loginToken;
+       localStorage["loginTokenExpires"] = message.loginTokenExpires;
+       localStorage["userId"] = message.userId;
+       localStorage["hexIv"] = message.hexIv;
+       localStorage["hexKey"] = message.hexKey;
+       } else {
+       console.log("token is invalid");
+       localStorage.clear();
+       }
+       });
+       break;*/
       case "new_tab_home":
         console.log("message", message);
         const homepageLink = message.homepageLink;
@@ -256,9 +258,21 @@
 
     // Stop login 如果tabUrl is updated(user's already logged in)
     if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" && changeInfo.url) {
-      //如果跳转链接和登录链接互不包含,则算url改变,而比如www.abc.com变成www.abc.com?uId=123, 不算改url
-      const urlChanged = changeInfo.url.indexOf(tabsOpened[tabId].url) === -1 &&
-          tabsOpened[tabId].url.indexOf(changeInfo.url) === -1;
+      //有两种情况我们认为算是url改变:
+      // 1. 如果跳转链接和登录链接互不包含, 比如abc.com变成bcd.com
+      // 2. 如果登录链接包括login, signin, 而跳转链接不包含
+      // 而这种情况不算url改变比如www.abc.com 变成 www.abc.com?uId=123, 不算改url
+      const urlChanged =
+          (
+              changeInfo.url.indexOf(tabsOpened[tabId].url) === -1 &&
+              tabsOpened[tabId].url.indexOf(changeInfo.url) === -1
+          ) || (
+              tabsOpened[tabId].url.indexOf("login") > -1 &&
+              changeInfo.url.indexOf("login") === -1
+          ) || (
+              tabsOpened[tabId].url.indexOf("signin") > -1 &&
+              changeInfo.url.indexOf("signin") === -1
+          );
       if (urlChanged) {
         console.log("tab " + tabId + "'s url is updated from ", tabsOpened[tabId].url, " to ",
             changeInfo.url,
