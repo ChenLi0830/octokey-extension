@@ -123,5 +123,20 @@
       password = character;
     }
     return password;
+  };
+
+  //这个网站是否需要等待iframe loading完,如果在iframeSiteList的网站里,就需要
+  window.isNotContainedBy = function(url, iframeSiteList){
+    //console.log("url, iframeSiteList", url, iframeSiteList);
+    var urlIsContained = false;
+    //是不是每个iframeURL都不被URL所contain
+    $.each(iframeSiteList, function(index, iframeURL){
+      const urlBelongToIframeSite = url.indexOf(iframeURL) > -1;
+      //console.log("url, iframeURL, urlBelongToIframeSite", url, iframeURL, urlBelongToIframeSite);
+      urlIsContained = urlIsContained || urlBelongToIframeSite;
+    });
+    return !urlIsContained;
   }
+
+
 })();

@@ -3,12 +3,12 @@
   var authTabs = [];
   //Todo - move this to database, more specifically, add a record in each app's document.
   var iframeSiteList = [
-    "https://login.tmall.com/?redirectURL=tmall.com",
-    "http://www.qq.com/",
-    "http://login.163.com/",
-    "https://account.aliyun.com/login/login.htm",
-    "http://webmail30.189.cn/w2/",
-    "https://www.icloud.com/#mail",
+    "tmall.com",
+    "qq.com",
+    "163.com",
+    "aliyun.com",
+    "webmail30.189.cn",
+    "icloud.com",
     //"http://i.xunlei.com/login.html",
     //"https://pan.baidu.com/",
     //"https://passport.baidu.com/v2/?login",
@@ -207,8 +207,8 @@
                 {file: "styles/overlay.css", runAt: "document_start"});
           }
 
-          if ($.inArray(tabsOpened[tabId].url, iframeSiteList) === -1) {//不包含在iframeSiteList的名单里
-            console.log("webNavigation.onDOMContentLoaded logging in", tabsOpened[tabId].url,
+          if (isNotContainedBy(tabsOpened[tabId].url, iframeSiteList)) {//不包含在iframeSiteList的名单里
+            console.log("不包含在iframe名单里, webNavigation.onDOMContentLoaded logging in", tabsOpened[tabId].url,
                 tabsOpened[tabId].username, "popUpLogin", tabsOpened[tabId].popUpLogin);
 
             tabsOpened[tabId].doneLoadingPage = true;
@@ -286,8 +286,8 @@
     if (tabsOpened[tabId] && tabsOpened[tabId].task === "new_tab_login" &&
         changeInfo.status === "complete") {
 
-      if ($.inArray(tabsOpened[tabId].url, iframeSiteList) > -1) {//包含在 iframeSiteList的名单里
-        console.log("tabs.onUpdated complete logging in", tabsOpened[tabId].url,
+      if (!isNotContainedBy(tabsOpened[tabId].url, iframeSiteList)) {//包含在 iframeSiteList的名单里
+        console.log("包含在iframe名单里, tabs.onUpdated complete logging in", tabsOpened[tabId].url,
             tabsOpened[tabId]);
 
         tabsOpened[tabId].doneLoadingPage = true;
