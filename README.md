@@ -1,5 +1,11 @@
 # Octokey-Extension
-This is the extension of Octokey.
+The extension of Octokey. A user needs it to make full use of the Octokey web app. 
+
+It grants the web app browser permissions such as 
+* making cross-origin request
+* allowing communication between tabs
+* using local storage
+
 Targeted Browsers:
 - [x] Chrome
 - [ ] Safari
