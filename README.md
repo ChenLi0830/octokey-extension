@@ -1,9 +1,9 @@
 # Octokey-Extension
 This is the extension of Octokey.
 Targeted Browsers:
-- [*] Chrome
+- [x] Chrome
 - [] Safari
-- [*] Baidu Browser
-- [*] 360 Browser
-- [*] CM(Liebao) Browser
+- [x] Baidu Browser
+- [x] 360 Browser
+- [x] CM(Liebao) Browser
 - [] Sogou Browser
