@@ -3,9 +3,9 @@
 
 The extension of Octokey. A user needs it to make full use of the [Octokey web app](https://oyaoshi.com). 
 
-## Why using a extension?
+## Why an extension?
 Octokey web-app needs the following browser permissions:
-* Making cross-origin request
+* Making cross-origin requests
 * Allowing communication between tabs
 * Using local storage
 
