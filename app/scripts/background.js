@@ -17,14 +17,14 @@
     //"https://login.taobao.com/"
   ];
 
-  //当检测extension安装时,reload oyaoshi tabs, 保证extension生效
+  //当检测extension安装时,reload octokeyteam tabs, 保证extension生效
   chrome.runtime.onInstalled.addListener(function (details) {
     console.log("onInstalled triggered - details:", details);
     if (details.reason === "install" || details.reason === "update") {
       chrome.windows.getAll({populate: true}, function (windows) {
         windows.forEach(function (window) {
           window.tabs.forEach(function (tab) {
-            if (/oyaoshi/.test(tab.url)) {//If the tab url contains 'oyaoshi'
+            if (/octokeyteam/.test(tab.url)) {//If the tab url contains 'octokeyteam'
               console.log("tab", tab);
               chrome.tabs.reload(tab.id);
               //tab.
@@ -37,14 +37,14 @@
 
   chrome.browserAction.onClicked.addListener(function (activeTab) {
 
-    var newURL = "https://oyaoshi.com";
+    var newURL = "https://octokeyteam.com";
     console.log("localStorage", localStorage);
     if (localStorage.length === 0) {
       //之前从没有用过Octokey
-      newURL = "https://oyaoshi.com";
+      newURL = "https://octokeyteam.com";
     } else {
       //之前用过Octokey
-      newURL = "https://oyaoshi.com";
+      newURL = "https://octokeyteam.com";
     }
     chrome.tabs.create({url: newURL});
   });
@@ -52,7 +52,7 @@
   chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     switch (message.message) {
       case "new_tab_login":
-        //console.log("message", message);
+        console.log("message", message) ;
         //console.log("localStorage", localStorage);
         const loginLink = message.loginLink,
             username = message.username,

@@ -30,7 +30,7 @@
         "matches": [
             "http://localhost:3000/*",
             "http://114.215.98.118/*",
-            "https://oyaoshi.com/*"
+            "https://octokeyteam.com/*"
         ]
     },
     "browser_action": {
@@ -69,7 +69,7 @@
         {
             "matches": [
                 "http://localhost:3000/*",
-                "https://oyaoshi.com/*"
+                "https://octokeyteam.com/*"
             ],
             "js": [
                 "scripts/content.js"
